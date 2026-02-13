@@ -1,0 +1,40 @@
+name: CodeQL
+
+on:
+  push:
+    branches-ignore: [dependabot/**]
+  pull_request:
+  schedule:
+    - cron: '0 14 * * 6'
+
+permissions: {}
+
+jobs:
+  analyze:
+    runs-on: macos-latest
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
+        with:
+          xcode-version: latest-stable
+
+      - uses: github/codeql-action/init@0d579ffd059c29b07949a3cce3983f0780820c98 # v4.32.6
+        with:
+          languages: swift
+          build-mode: manual
+
+      - name: Build with xcodebuild
+        run: |
+          xcodebuild build \
+            -scheme MinFraudDevice \
+            -destination 'generic/platform=iOS'
+
+      - uses: github/codeql-action/analyze@0d579ffd059c29b07949a3cce3983f0780820c98 # v4.32.6

@@ -1,0 +1,48 @@
+disabled_rules:
+  - file_length
+  - function_body_length
+  - todo
+  - type_body_length
+
+opt_in_rules:
+  - empty_count
+  - explicit_init
+  - closure_spacing
+  - fatal_error_message
+  - implicitly_unwrapped_optional
+  - multiline_parameters
+  - overridden_super_call
+  - redundant_nil_coalescing
+  - single_test_class
+  - trailing_whitespace
+
+included:
+  - Sources
+  - Tests
+  - Example
+
+excluded:
+  - .build
+  - .swiftpm
+  - Tests/LinuxMain.swift
+
+line_length:
+  warning: 120
+  error: 150
+  ignores_comments: true
+
+identifier_name:
+  min_length:
+    warning: 2
+  max_length:
+    warning: 50
+  excluded:
+    - id
+    - url
+    - URL
+
+cyclomatic_complexity:
+  warning: 10
+  error: 20
+
+reporter: "xcode"
