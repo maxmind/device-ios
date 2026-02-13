@@ -1,0 +1,71 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: macos-14
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Select Xcode
+      run: sudo xcode-select -s /Applications/Xcode_15.2.app/Contents/Developer
+
+    - name: Build Swift Package
+      run: swift build -c release
+
+    - name: Run Tests
+      run: swift test
+
+    - name: Extract Release Notes
+      id: extract_notes
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/v}
+        NOTES=$(awk "/## \[$VERSION\]/,/## \[/" CHANGELOG.md | sed '1d;$d')
+        echo "notes<<EOF" >> $GITHUB_OUTPUT
+        echo "$NOTES" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        body: ${{ steps.extract_notes.outputs.notes }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build Documentation
+      run: |
+        swift package --allow-writing-to-directory ./docs \
+          generate-documentation --target MinFraudDevice \
+          --output-path ./docs \
+          --transform-for-static-hosting \
+          --hosting-base-path device-ios
+
+    - name: Deploy Documentation to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs
+        cname: minfraud-device.maxmind.com
+      if: success()
+
+  notify-release:
+    name: Notify Release
+    needs: create-release
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Send Notification
+      run: |
+        echo "Release ${{ github.ref }} has been published"
+        # Add your notification logic here (Slack, email, etc.)
