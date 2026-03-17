@@ -4,6 +4,7 @@ import Foundation
 // import MinFraudDevice
 
 /// Service for fraud detection integration with MaxMind minFraud Device SDK
+@MainActor
 class FraudDetectionService: ObservableObject {
 
     // MARK: - Published Properties
@@ -30,15 +31,10 @@ class FraudDetectionService: ObservableObject {
         }
     }
 
-    // MARK: - Initialization
-
     init() {
         initializeSDK()
     }
 
-    // MARK: - SDK Integration
-
-    /// Initializes the MinFraudDevice SDK and retrieves device information
     private func initializeSDK() {
         // In a real implementation, you would use:
         // let sdk = MinFraudDevice.shared

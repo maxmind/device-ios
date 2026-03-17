@@ -1,35 +1,13 @@
 import Foundation
 import DeviceCheck
 
-/// Manages DeviceCheck integration for fraud state management.
-///
-/// DeviceCheck provides Apple's framework for tracking fraud-related device state
-/// on Apple's servers. This is the recommended approach for persisting fraud signals
-/// that survive factory resets and device transfers.
-///
-/// ## Server-Side Integration Required
-///
-/// DeviceCheck tokens must be validated and state managed through your backend server
-/// using Apple's DeviceCheck API. The tokens generated here are short-lived and must
-/// be immediately sent to your server.
 class DeviceCheckManager {
-
-    // MARK: - Properties
+    public var isSupported: Bool {
+        DCDevice.current.isSupported
+    }
 
     /// Completion handler for DeviceCheck token generation
     typealias TokenCompletion = (Result<Data, DeviceCheckError>) -> Void
-
-    // MARK: - Public Methods
-
-    /// Checks if DeviceCheck is supported on the current device.
-    ///
-    /// DeviceCheck is available on iOS 11+ but may not be supported on all devices
-    /// (e.g., simulators, certain device configurations).
-    ///
-    /// - Returns: true if DeviceCheck is supported, false otherwise
-    func isSupported() -> Bool {
-        return DCDevice.current.isSupported
-    }
 
     /// Generates a DeviceCheck token for server-side validation.
     ///
@@ -40,7 +18,7 @@ class DeviceCheckManager {
     ///
     /// - Returns: A Result containing either the token Data or a DeviceCheckError
     func generateToken() async -> Result<Data, DeviceCheckError> {
-        guard isSupported() else {
+        guard isSupported else {
             return .failure(.notSupported)
         }
 
@@ -67,8 +45,6 @@ class DeviceCheckManager {
         return result.map { $0.base64EncodedString() }
     }
 }
-
-// MARK: - DeviceCheck Errors
 
 /// Errors that can occur during DeviceCheck operations.
 public enum DeviceCheckError: Error, LocalizedError {

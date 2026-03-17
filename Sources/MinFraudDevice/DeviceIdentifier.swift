@@ -2,18 +2,9 @@ import Foundation
 import Security
 import UIKit
 
-/// Manages persistent device identification using IDFV with keychain storage.
-///
-/// This implementation uses the Identifier for Vendor (IDFV) as the base device identifier
-/// and persists it in the keychain to maintain consistency across app reinstalls.
 class DeviceIdentifier {
-
-    // MARK: - Constants
-
     private let keychainService = "com.maxmind.minfraud.device"
-    private let deviceIdKey = "persistent_device_id"
-
-    // MARK: - Public Methods
+    private let deviceIDKey = "persistent_device_id"
 
     /// Retrieves the persistent device identifier.
     ///
@@ -38,16 +29,11 @@ class DeviceIdentifier {
         return idfv
     }
 
-    // MARK: - Private Methods
-
-    /// Loads the device identifier from the keychain.
-    ///
-    /// - Returns: The stored device identifier, or nil if not found or an error occurs
     private func loadFromKeychain() -> String? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: deviceIdKey,
+            kSecAttrAccount as String: deviceIDKey,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
@@ -64,19 +50,13 @@ class DeviceIdentifier {
         return identifier
     }
 
-    /// Stores the device identifier in the keychain.
-    ///
-    /// Uses kSecAttrAccessibleWhenUnlockedThisDeviceOnly for security,
-    /// which provides a good balance of persistence and security.
-    ///
-    /// - Parameter identifier: The device identifier to store
     private func storeInKeychain(_ identifier: String) {
         guard let data = identifier.data(using: .utf8) else { return }
 
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: deviceIdKey,
+            kSecAttrAccount as String: deviceIDKey,
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         ]

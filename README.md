@@ -165,7 +165,7 @@ The SDK currently includes:
 
 - **Phase 1**: Core device identification using IDFV + Keychain ✅
 - **Phase 2**: DeviceCheck integration for server-side fraud state management ✅
-- **Phase 3**: Additional device context (OS version, model, screen size) - Planned
+- **Phase 3**: Additional device context (OS version, model, screen size) - Considered for future implementation
 
 The modular architecture allows you to use just device identification, or add DeviceCheck for enhanced fraud detection capabilities.
 
