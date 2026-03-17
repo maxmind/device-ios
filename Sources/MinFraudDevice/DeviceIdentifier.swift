@@ -1,25 +1,25 @@
 import Foundation
 import Security
 import UIKit
+import os
 
-class DeviceIdentifier {
+final class DeviceIdentifier {
+    private let keychain: KeychainStoring
     private let keychainService = "com.maxmind.minfraud.device"
     private let deviceIDKey = "persistent_device_id"
+    private static let logger = Logger(subsystem: "com.maxmind.minfraud.device", category: "Keychain")
 
-    /// Retrieves the persistent device identifier.
-    ///
-    /// This method first attempts to load an existing identifier from the keychain.
-    /// If no identifier exists, it retrieves the system IDFV and stores it in the keychain
-    /// for future persistence across app reinstalls.
-    ///
-    /// - Returns: The device identifier string, or nil if IDFV is unavailable
-    func getDeviceIdentifier() -> String? {
+    init(keychain: KeychainStoring = SystemKeychainStore()) {
+        self.keychain = keychain
+    }
+
+    var deviceID: String? {
         // 1. Try keychain first (survives app uninstall)
         if let persistentId = loadFromKeychain() {
             return persistentId
         }
 
-        // 2. Get system IDFV and store in keychain
+        // 2. Get system IDFV
         guard let idfv = UIDevice.current.identifierForVendor?.uuidString else {
             return nil
         }
@@ -39,7 +39,7 @@ class DeviceIdentifier {
         ]
 
         var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        let status = keychain.copyMatching(query as CFDictionary, result: &result)
 
         guard status == errSecSuccess,
               let data = result as? Data,
@@ -56,19 +56,26 @@ class DeviceIdentifier {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: deviceIDKey,
+            kSecAttrAccount as String: deviceIDKey
+        ]
+
+        let attributesToUpdate: [String: Any] = [
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         ]
 
-        // Delete existing item if present
-        SecItemDelete(query as CFDictionary)
+        let status = keychain.update(query as CFDictionary, attributes: attributesToUpdate as CFDictionary)
+        if status != errSecSuccess && status != errSecItemNotFound {
+            DeviceIdentifier.logger.debug("Keychain update failed (status: \(status, privacy: .public))")
+            return
+        }
 
-        // Add new item
-        let status = SecItemAdd(query as CFDictionary, nil)
-        if status != errSecSuccess {
-            // Note: In production, this could be logged to your analytics system
-            print("MinFraudDevice: Failed to store device identifier in keychain (status: \(status))")
+        if status == errSecItemNotFound {
+            let addQuery = query.merging(attributesToUpdate) { _, new in new }
+            let addStatus = keychain.add(addQuery as CFDictionary)
+            if addStatus != errSecSuccess {
+                DeviceIdentifier.logger.debug("Keychain add failed (status: \(addStatus, privacy: .public))")
+            }
         }
     }
 }
