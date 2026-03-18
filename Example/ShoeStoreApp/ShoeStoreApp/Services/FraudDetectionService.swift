@@ -1,7 +1,6 @@
 import Foundation
 
-// Note: In a real implementation, you would import MinFraudDevice
-// import MinFraudDevice
+import MinFraudDevice
 
 /// Service for fraud detection integration with MaxMind minFraud Device SDK
 @MainActor
@@ -36,14 +35,9 @@ class FraudDetectionService: ObservableObject {
     }
 
     private func initializeSDK() {
-        // In a real implementation, you would use:
-        // let sdk = MinFraudDevice.shared
-        // deviceId = sdk.getDeviceId()
-        // isDeviceCheckSupported = sdk.isDeviceCheckSupported()
-
-        // Mock implementation for demonstration
-        deviceId = "MOCK-DEVICE-ID-\(UUID().uuidString.prefix(8))"
-        isDeviceCheckSupported = true
+        let sdk = MinFraudDevice.shared
+        deviceId = sdk.deviceID
+        isDeviceCheckSupported = sdk.isDeviceCheckSupported
     }
 
     /// Analyzes a transaction for fraud risk
@@ -66,16 +60,13 @@ class FraudDetectionService: ObservableObject {
 
         let sdk = MinFraudDevice.shared
 
-        guard let deviceId = sdk.getDeviceId() else {
+        guard let deviceId = sdk.deviceID else {
             return .unknown
         }
 
         var deviceCheckToken: String?
         if sdk.isDeviceCheckSupported() {
-            let tokenResult = await sdk.generateDeviceCheckTokenString()
-            if case .success(let token) = tokenResult {
-                deviceCheckToken = token
-            }
+            deviceCheckToken = try? await sdk.generateDeviceCheckTokenString()
         }
 
         // Send to your backend
