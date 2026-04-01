@@ -3,22 +3,16 @@ import os
 
 struct RequestBody: Encodable {
     let accountID: Int
-    let idfv: String
-    let trackingToken: String?
-    let requestDurationMS: Int?
+    let deviceData: DeviceData
 
     enum CodingKeys: String, CodingKey {
         case accountID = "account_id"
-        case idfv
-        case trackingToken = "tracking_token"
-        case requestDurationMS = "request_duration"
     }
 
-    init(accountID: Int, deviceData: DeviceData) {
-        self.accountID = accountID
-        self.idfv = deviceData.idfv
-        self.trackingToken = deviceData.trackingToken
-        self.requestDurationMS = deviceData.requestDurationMS
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(accountID, forKey: .accountID)
+        try deviceData.encode(to: encoder)
     }
 }
 
