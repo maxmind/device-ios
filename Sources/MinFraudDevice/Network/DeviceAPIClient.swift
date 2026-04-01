@@ -29,7 +29,7 @@ public enum APIError: Error, LocalizedError {
     }
 }
 
-final class DeviceAPIClient {
+final class DeviceAPIClient: Sendable {
     private let config: SDKConfig
     private let session: URLSession
     private let logger: Logger?

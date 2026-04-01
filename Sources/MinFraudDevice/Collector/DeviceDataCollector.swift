@@ -2,7 +2,7 @@ import Foundation
 import os
 import UIKit
 
-final class DeviceDataCollector {
+final class DeviceDataCollector: @unchecked Sendable {
     private let storage: KeychainStoring
     private let idfvProvider: () -> String?
     private let logger: Logger?
