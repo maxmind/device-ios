@@ -83,7 +83,7 @@ final class DeviceAPIClient {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("minfraud-device-ios/0.1.0", forHTTPHeaderField: "User-Agent")
+        request.setValue("minfraud-device-ios/\(SDKConfig.version)", forHTTPHeaderField: "User-Agent")
         request.httpBody = bodyData
 
         let (data, response) = try await session.data(for: request)
