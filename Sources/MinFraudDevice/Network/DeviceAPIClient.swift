@@ -75,7 +75,7 @@ final class DeviceAPIClient: Sendable {
         return ipv6Response
     }
 
-    func sendToURL(_ deviceData: DeviceData, url: URL) async throws -> ServerResponse {
+    private func sendToURL(_ deviceData: DeviceData, url: URL) async throws -> ServerResponse {
         let body = RequestBody(accountID: config.accountID, deviceData: deviceData)
         let encoder = JSONEncoder()
         let bodyData = try encoder.encode(body)
