@@ -134,6 +134,19 @@ final class DeviceAPIClientTests: XCTestCase {
         XCTAssertEqual(capturedBody?["tracking_token"] as? String, "test-token")
     }
 
+    func testRequestBodyEncodesDeviceDataFieldsFlat() throws {
+        let deviceData = DeviceData(idfv: "test-idfv", trackingToken: "test-token", requestDurationMS: 42)
+        let body = RequestBody(accountID: 123, deviceData: deviceData)
+        let data = try JSONEncoder().encode(body)
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+
+        XCTAssertEqual(json["account_id"] as? Int, 123)
+        XCTAssertEqual(json["idfv"] as? String, "test-idfv")
+        XCTAssertEqual(json["tracking_token"] as? String, "test-token")
+        XCTAssertEqual(json["request_duration"] as? Int, 42)
+        XCTAssertNil(json["deviceData"], "DeviceData fields should be flat, not nested")
+    }
+
     // MARK: - Dual Request Tests
 
     func testDualRequestSendsToIPv6AndIPv4Endpoints() async throws {
