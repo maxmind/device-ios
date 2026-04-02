@@ -142,8 +142,6 @@ public final class DeviceTracker: @unchecked Sendable {
     }
 
     deinit {
-        lock.lock()
-        defer { lock.unlock() }
         automaticCollectionTask?.cancel()
     }
 }
