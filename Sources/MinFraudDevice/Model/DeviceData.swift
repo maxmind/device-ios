@@ -1,6 +1,6 @@
 import Foundation
 
-struct DeviceData: Encodable {
+struct DeviceData: Encodable, Sendable {
     let idfv: String
     let trackingToken: String?
     let requestDurationMS: Int?
