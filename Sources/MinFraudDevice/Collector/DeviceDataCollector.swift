@@ -39,7 +39,9 @@ final class DeviceDataCollector: @unchecked Sendable {
             throw MinFraudDeviceError.idfvUnavailable
         }
 
-        if !storage.set(systemIDFV, forKey: KeychainStorage.idfvKey) {
+        if storage.set(systemIDFV, forKey: KeychainStorage.idfvKey) {
+            logger?.debug("Cached IDFV in keychain")
+        } else {
             logger?.warning("Failed to cache IDFV in keychain")
         }
 

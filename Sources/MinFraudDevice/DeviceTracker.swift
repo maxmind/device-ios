@@ -99,7 +99,9 @@ public final class DeviceTracker: @unchecked Sendable {
         }
 
         if storage.set(token, forKey: KeychainStorage.trackingTokenKey) {
-            logger?.debug("Tracking token saved from server response")
+            logger?.debug("Cached tracking token from server response in keychain")
+        } else {
+            logger?.warning("Failed to cache tracking token in keychain")
         }
 
         return TrackingResult(trackingToken: token)
