@@ -94,7 +94,7 @@ public final class DeviceTracker: @unchecked Sendable {
         let response = try await apiClient.sendDeviceData(deviceData)
 
         guard let token = response.trackingToken,
-              !token.trimmingCharacters(in: .whitespaces).isEmpty else {
+              !token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw MinFraudDeviceError.missingTrackingToken
         }
 
