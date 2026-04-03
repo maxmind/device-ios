@@ -61,7 +61,7 @@ final class DeviceAPIClient: Sendable {
             let ipv4URL = URL(string: "https://\(SDKConfig.defaultIPv4Host)\(SDKConfig.endpointPath)")!
             let dataWithDuration = DeviceData(
                 idfv: deviceData.idfv,
-                trackingToken: deviceData.trackingToken,
+                storedID: deviceData.storedID,
                 requestDurationMS: requestDurationMS
             )
             do {

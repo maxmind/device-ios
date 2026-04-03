@@ -21,11 +21,11 @@ final class DeviceDataCollector: @unchecked Sendable {
 
     func collect() throws -> DeviceData {
         let idfv = try resolveIDFV()
-        let trackingToken = storage.get(forKey: KeychainStorage.trackingTokenKey)
+        let storedID = storage.get(forKey: KeychainStorage.storedIDKey)
 
         return DeviceData(
             idfv: idfv,
-            trackingToken: trackingToken,
+            storedID: storedID,
             requestDurationMS: nil
         )
     }

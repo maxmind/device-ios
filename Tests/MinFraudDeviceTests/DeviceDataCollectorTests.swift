@@ -60,9 +60,9 @@ final class DeviceDataCollectorTests: XCTestCase {
         }
     }
 
-    func testCollectIncludesTrackingTokenFromKeychain() throws {
+    func testCollectIncludesStoredIDFromKeychain() throws {
         let storage = MockKeychainStorage()
-        _ = storage.set("existing-token", forKey: KeychainStorage.trackingTokenKey)
+        _ = storage.set("existing-stored-id", forKey: KeychainStorage.storedIDKey)
         let collector = DeviceDataCollector(
             storage: storage,
             idfvProvider: { "IDFV" }
@@ -70,10 +70,10 @@ final class DeviceDataCollectorTests: XCTestCase {
 
         let data = try collector.collect()
 
-        XCTAssertEqual(data.trackingToken, "existing-token")
+        XCTAssertEqual(data.storedID, "existing-stored-id")
     }
 
-    func testCollectReturnsNilTrackingTokenWhenNotStored() throws {
+    func testCollectReturnsNilStoredIDWhenNotStored() throws {
         let storage = MockKeychainStorage()
         let collector = DeviceDataCollector(
             storage: storage,
@@ -82,7 +82,7 @@ final class DeviceDataCollectorTests: XCTestCase {
 
         let data = try collector.collect()
 
-        XCTAssertNil(data.trackingToken)
+        XCTAssertNil(data.storedID)
     }
 
     func testCollectReturnsNilRequestDuration() throws {

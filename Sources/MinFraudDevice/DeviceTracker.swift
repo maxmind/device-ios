@@ -6,15 +6,10 @@ public enum MinFraudDeviceError: Error, LocalizedError, Equatable {
     /// The Identifier for Vendor (IDFV) could not be obtained from the system or keychain.
     case idfvUnavailable
 
-    /// The server response did not include a tracking token.
-    case missingTrackingToken
-
     public var errorDescription: String? {
         switch self {
         case .idfvUnavailable:
             return "Unable to obtain an Identifier for Vendor (IDFV)"
-        case .missingTrackingToken:
-            return "Server response did not include a tracking token"
         }
     }
 }
@@ -81,30 +76,24 @@ public final class DeviceTracker: @unchecked Sendable {
 
     /// Collects device data and sends it to MaxMind servers.
     ///
-    /// On success, the tracking token is persisted in the keychain for
-    /// inclusion in subsequent requests.
+    /// On success, the stored ID is persisted in the keychain for
+    /// inclusion in subsequent requests, and returned as a tracking token.
     ///
     /// - Returns: A ``TrackingResult`` containing the tracking token.
     /// - Throws: ``MinFraudDeviceError/idfvUnavailable`` if the device
-    ///   identifier cannot be obtained, ``MinFraudDeviceError/missingTrackingToken``
-    ///   if the server response does not include a token, or an ``APIError``
+    ///   identifier cannot be obtained, or an ``APIError``
     ///   if the network request fails.
     public func collectAndSend() async throws -> TrackingResult {
         let deviceData = try collector.collect()
         let response = try await apiClient.sendDeviceData(deviceData)
 
-        guard let token = response.trackingToken,
-              !token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw MinFraudDeviceError.missingTrackingToken
-        }
-
-        if storage.set(token, forKey: KeychainStorage.trackingTokenKey) {
-            logger?.debug("Cached tracking token from server response in keychain")
+        if storage.set(response.storedID, forKey: KeychainStorage.storedIDKey) {
+            logger?.debug("Cached stored ID from server response in keychain")
         } else {
-            logger?.warning("Failed to cache tracking token in keychain")
+            logger?.warning("Failed to cache stored ID in keychain")
         }
 
-        return TrackingResult(trackingToken: token)
+        return TrackingResult(trackingToken: response.storedID)
     }
 
     /// Cancels automatic collection and releases resources.

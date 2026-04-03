@@ -18,7 +18,7 @@ final class DeviceAPIClientTests: XCTestCase {
     }
 
     private var testDeviceData: DeviceData {
-        DeviceData(idfv: "test-idfv", trackingToken: "test-token", requestDurationMS: nil)
+        DeviceData(idfv: "test-idfv", storedID: "test-stored-id", requestDurationMS: nil)
     }
 
     private func makeClient(
@@ -29,24 +29,37 @@ final class DeviceAPIClientTests: XCTestCase {
         return DeviceAPIClient(config: config, session: mockSession ?? .shared)
     }
 
-    func testSendDeviceDataSuccessResponses() async throws {
+    func testSendDeviceDataSuccess() async throws {
+        MockURLProtocol.requestHandler = { _ in
+            let response = HTTPURLResponse(
+                url: URL(string: "https://test.maxmind.com")!,
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: ["Content-Type": "application/json"]
+            )!
+            return (response, Data("{\"stored_id\":\"abc123:hmac456\",\"ip_version\":6}".utf8))
+        }
+
+        let client = makeClient()
+        let response = try await client.sendDeviceData(testDeviceData)
+
+        XCTAssertEqual(response.storedID, "abc123:hmac456")
+        XCTAssertEqual(response.ipVersion, 6)
+    }
+
+    func testSendDeviceDataThrowsOnInvalidResponse() async {
         struct Case {
             let label: String
             let json: String
-            let expectedToken: String?
-            let expectedIPVersion: Int?
         }
 
         let cases: [Case] = [
-            Case(label: "valid values",
-                 json: "{\"tracking_token\":\"abc123:hmac456\",\"ip_version\":6}",
-                 expectedToken: "abc123:hmac456", expectedIPVersion: 6),
-            Case(label: "null values",
-                 json: "{\"tracking_token\":null,\"ip_version\":null}",
-                 expectedToken: nil, expectedIPVersion: nil),
-            Case(label: "empty object",
-                 json: "{}",
-                 expectedToken: nil, expectedIPVersion: nil)
+            Case(label: "missing stored_id", json: "{\"ip_version\":6}"),
+            Case(label: "null stored_id", json: "{\"stored_id\":null,\"ip_version\":6}"),
+            Case(label: "blank stored_id", json: "{\"stored_id\":\"   \",\"ip_version\":6}"),
+            Case(label: "missing ip_version", json: "{\"stored_id\":\"abc\"}"),
+            Case(label: "invalid ip_version", json: "{\"stored_id\":\"abc\",\"ip_version\":5}"),
+            Case(label: "empty object", json: "{}")
         ]
 
         for tc in cases {
@@ -61,10 +74,14 @@ final class DeviceAPIClientTests: XCTestCase {
             }
 
             let client = makeClient()
-            let response = try await client.sendDeviceData(testDeviceData)
-
-            XCTAssertEqual(response.trackingToken, tc.expectedToken, "Failed for case: \(tc.label)")
-            XCTAssertEqual(response.ipVersion, tc.expectedIPVersion, "Failed for case: \(tc.label)")
+            do {
+                _ = try await client.sendDeviceData(testDeviceData)
+                XCTFail("Expected error for case: \(tc.label)")
+            } catch is DecodingError {
+                // Expected
+            } catch {
+                XCTFail("Expected DecodingError for case \(tc.label), got: \(error)")
+            }
         }
     }
 
@@ -112,7 +129,7 @@ final class DeviceAPIClientTests: XCTestCase {
             capturedContentType = request.value(forHTTPHeaderField: "Content-Type")
             capturedURL = request.url
             let data = Data("""
-            {"tracking_token":"abc123:hmac456","ip_version":4}
+            {"stored_id":"abc123:hmac456","ip_version":4}
             """.utf8)
             let response = HTTPURLResponse(
                 url: request.url!,
@@ -131,23 +148,31 @@ final class DeviceAPIClientTests: XCTestCase {
         XCTAssertNotNil(capturedBody)
         XCTAssertEqual(capturedBody?["account_id"] as? Int, 12345)
         XCTAssertEqual(capturedBody?["idfv"] as? String, "test-idfv")
-        XCTAssertEqual(capturedBody?["tracking_token"] as? String, "test-token")
+        XCTAssertEqual(capturedBody?["stored_id"] as? String, "test-stored-id")
     }
 
     func testRequestBodyEncodesDeviceDataFieldsFlat() throws {
-        let deviceData = DeviceData(idfv: "test-idfv", trackingToken: "test-token", requestDurationMS: 42)
+        let deviceData = DeviceData(idfv: "test-idfv", storedID: "test-stored-id", requestDurationMS: 42)
         let body = RequestBody(accountID: 123, deviceData: deviceData)
         let data = try JSONEncoder().encode(body)
         let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
 
         XCTAssertEqual(json["account_id"] as? Int, 123)
         XCTAssertEqual(json["idfv"] as? String, "test-idfv")
-        XCTAssertEqual(json["tracking_token"] as? String, "test-token")
+        XCTAssertEqual(json["stored_id"] as? String, "test-stored-id")
         XCTAssertEqual(json["request_duration"] as? Int, 42)
         XCTAssertNil(json["deviceData"], "DeviceData fields should be flat, not nested")
     }
 
     // MARK: - Dual Request Tests
+
+    private var validIPv6Response: String {
+        "{\"stored_id\":\"abc123:hmac456\",\"ip_version\":6}"
+    }
+
+    private var validIPv4Response: String {
+        "{\"stored_id\":\"abc123:hmac456\",\"ip_version\":4}"
+    }
 
     func testDualRequestSendsToIPv6AndIPv4Endpoints() async throws {
         var capturedURLs: [String] = []
@@ -155,16 +180,7 @@ final class DeviceAPIClientTests: XCTestCase {
         MockURLProtocol.requestHandler = { request in
             requestCount += 1
             capturedURLs.append(request.url?.absoluteString ?? "")
-            let body: String
-            if requestCount == 1 {
-                body = """
-                {"tracking_token":"abc123:hmac456","ip_version":6}
-                """
-            } else {
-                body = """
-                {"tracking_token":"abc123:hmac456","ip_version":4}
-                """
-            }
+            let body = requestCount == 1 ? self.validIPv6Response : self.validIPv4Response
             let response = HTTPURLResponse(
                 url: request.url!,
                 statusCode: 200,
@@ -191,16 +207,7 @@ final class DeviceAPIClientTests: XCTestCase {
                let json = try? JSONSerialization.jsonObject(with: bodyData) as? [String: Any] {
                 capturedBodies.append(json)
             }
-            let body: String
-            if requestCount == 1 {
-                body = """
-                {"tracking_token":"abc123:hmac456","ip_version":6}
-                """
-            } else {
-                body = """
-                {"tracking_token":"abc123:hmac456","ip_version":4}
-                """
-            }
+            let body = requestCount == 1 ? self.validIPv6Response : self.validIPv4Response
             let response = HTTPURLResponse(
                 url: request.url!,
                 statusCode: 200,
@@ -225,9 +232,7 @@ final class DeviceAPIClientTests: XCTestCase {
         var requestCount = 0
         MockURLProtocol.requestHandler = { request in
             requestCount += 1
-            let data = Data("""
-            {"tracking_token":"abc123:hmac456","ip_version":4}
-            """.utf8)
+            let data = Data(self.validIPv4Response.utf8)
             let response = HTTPURLResponse(
                 url: request.url!,
                 statusCode: 200,
@@ -248,9 +253,7 @@ final class DeviceAPIClientTests: XCTestCase {
         MockURLProtocol.requestHandler = { request in
             requestCount += 1
             if requestCount == 1 {
-                let data = Data("""
-                {"tracking_token":"abc123:hmac456","ip_version":6}
-                """.utf8)
+                let data = Data(self.validIPv6Response.utf8)
                 let response = HTTPURLResponse(
                     url: request.url!,
                     statusCode: 200,
@@ -259,9 +262,7 @@ final class DeviceAPIClientTests: XCTestCase {
                 )!
                 return (response, data)
             } else {
-                let data = Data("""
-                {"error":"Server Error"}
-                """.utf8)
+                let data = Data("{\"error\":\"Server Error\"}".utf8)
                 let response = HTTPURLResponse(
                     url: request.url!,
                     statusCode: 500,
@@ -275,7 +276,7 @@ final class DeviceAPIClientTests: XCTestCase {
         let client = makeClient(serverURL: nil)
         let response = try await client.sendDeviceData(testDeviceData)
 
-        XCTAssertEqual(response.trackingToken, "abc123:hmac456")
+        XCTAssertEqual(response.storedID, "abc123:hmac456")
         XCTAssertEqual(requestCount, 2)
     }
 }
