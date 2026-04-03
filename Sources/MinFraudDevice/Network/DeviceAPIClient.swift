@@ -29,6 +29,23 @@ public enum APIError: Error, LocalizedError {
     }
 }
 
+extension APIError: CustomNSError {
+    public static var errorDomain: String { "\(SDKConfig.identifier).api" }
+
+    public var errorCode: Int {
+        switch self {
+        case .serverError(let statusCode, _): return statusCode
+        }
+    }
+
+    public var errorUserInfo: [String: Any] {
+        switch self {
+        case .serverError(_, let message):
+            return [NSLocalizedDescriptionKey: errorDescription ?? message]
+        }
+    }
+}
+
 final class DeviceAPIClient: Sendable {
     private let config: SDKConfig
     private let session: URLSession

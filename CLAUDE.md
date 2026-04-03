@@ -82,6 +82,10 @@ xcodebuild build \
 Unlike the Android sibling SDK, there is no singleton pattern. Users create
 instances directly.
 
+Objective-C compatible wrappers (`MMSDKConfig`, `MMDeviceTracker`,
+`MMTrackingResult`) live in `ObjC/` and wrap the Swift types with `NSObject`
+subclasses and completion-handler APIs.
+
 ### Four-Layer Architecture
 
 1. **Public API Layer** (`DeviceTracker.swift`)

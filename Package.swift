@@ -21,6 +21,10 @@ let package = Package(
         .testTarget(
             name: "MinFraudDeviceTests",
             dependencies: ["MinFraudDevice"]
+        ),
+        .testTarget(
+            name: "MinFraudDeviceObjCTests",
+            dependencies: ["MinFraudDevice"]
         )
     ]
 )

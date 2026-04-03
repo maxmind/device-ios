@@ -89,6 +89,28 @@ Call `shutdown()` to cancel automatic collection and release resources:
 tracker.shutdown()
 ```
 
+### Objective-C
+
+The SDK provides Objective-C compatible wrapper classes with an `MM` prefix.
+
+```objc
+@import MinFraudDevice;
+
+MMSDKConfig *config = [[MMSDKConfig alloc] initWithAccountID:123456];
+MMDeviceTracker *tracker = [[MMDeviceTracker alloc] initWithConfig:config];
+
+[tracker collectAndSendWithCompletion:^(MMTrackingResult *result, NSError *error) {
+    if (error) {
+        NSLog(@"Failed to send device data: %@", error);
+        return;
+    }
+    [self sendToBackend:result.trackingToken];
+}];
+
+// When done:
+[tracker shutdown];
+```
+
 ## Privacy
 
 The SDK collects the Identifier for Vendor (IDFV) and persists it in the

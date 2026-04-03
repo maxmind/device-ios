@@ -14,6 +14,16 @@ public enum MinFraudDeviceError: Error, LocalizedError, Equatable {
     }
 }
 
+extension MinFraudDeviceError: CustomNSError {
+    public static var errorDomain: String { SDKConfig.identifier }
+
+    public var errorCode: Int {
+        switch self {
+        case .idfvUnavailable: return 1
+        }
+    }
+}
+
 /// Main entry point for the MinFraud Device SDK.
 ///
 /// Create an instance with an ``SDKConfig``, then call ``collectAndSend()``
