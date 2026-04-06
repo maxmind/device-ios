@@ -3,22 +3,16 @@ import os
 
 struct RequestBody: Encodable {
     let accountID: Int
-    let idfv: String
-    let trackingToken: String?
-    let requestDurationMS: Int?
+    let deviceData: DeviceData
 
     enum CodingKeys: String, CodingKey {
         case accountID = "account_id"
-        case idfv
-        case trackingToken = "tracking_token"
-        case requestDurationMS = "request_duration"
     }
 
-    init(accountID: Int, deviceData: DeviceData) {
-        self.accountID = accountID
-        self.idfv = deviceData.idfv
-        self.trackingToken = deviceData.trackingToken
-        self.requestDurationMS = deviceData.requestDurationMS
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(accountID, forKey: .accountID)
+        try deviceData.encode(to: encoder)
     }
 }
 
@@ -35,7 +29,7 @@ public enum APIError: Error, LocalizedError {
     }
 }
 
-final class DeviceAPIClient {
+final class DeviceAPIClient: Sendable {
     private let config: SDKConfig
     private let session: URLSession
     private let logger: Logger?
@@ -81,7 +75,7 @@ final class DeviceAPIClient {
         return ipv6Response
     }
 
-    func sendToURL(_ deviceData: DeviceData, url: URL) async throws -> ServerResponse {
+    private func sendToURL(_ deviceData: DeviceData, url: URL) async throws -> ServerResponse {
         let body = RequestBody(accountID: config.accountID, deviceData: deviceData)
         let encoder = JSONEncoder()
         let bodyData = try encoder.encode(body)
@@ -89,7 +83,7 @@ final class DeviceAPIClient {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("minfraud-device-ios/0.1.0", forHTTPHeaderField: "User-Agent")
+        request.setValue("minfraud-device-ios/\(SDKConfig.version)", forHTTPHeaderField: "User-Agent")
         request.httpBody = bodyData
 
         let (data, response) = try await session.data(for: request)

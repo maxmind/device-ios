@@ -70,7 +70,7 @@ struct ConfigurationView: View {
                         Text("Custom server URL")
                         TextField("https://example.com", text: $serverURLText)
                             .keyboardType(.URL)
-                            .autocapitalization(.none)
+                            .textInputAutocapitalization(.never)
                             .disableAutocorrection(true)
                             .multilineTextAlignment(.trailing)
                     }
