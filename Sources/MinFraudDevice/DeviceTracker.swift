@@ -92,7 +92,8 @@ public final class DeviceTracker: @unchecked Sendable {
     /// - Returns: A ``TrackingResult`` containing the tracking token.
     /// - Throws: ``MinFraudDeviceError/idfvUnavailable`` if the device
     ///   identifier cannot be obtained, or an ``APIError``
-    ///   if the network request fails.
+    ///   if the server returns a non-success status code or the response
+    ///   body cannot be decoded.
     public func collectAndSend() async throws -> TrackingResult {
         let deviceData = try collector.collect()
         let response = try await apiClient.sendDeviceData(deviceData)
