@@ -1,6 +1,6 @@
 name: API Compatibility
 
-on: [push, pull_request]
+on: [pull_request]
 
 permissions: {}
 
@@ -12,9 +12,10 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout code
+      - name: Checkout base branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          ref: ${{ github.event.pull_request.base.ref }}
           persist-credentials: false
 
       - name: Set up Xcode
@@ -22,12 +23,37 @@ jobs:
         with:
           xcode-version: latest-stable
 
-      - name: Build
+      - name: Build base branch
         run: |
           xcodebuild build \
             -scheme MinFraudDevice \
             -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath .build/api-compat \
+            -derivedDataPath .build/api-compat-base \
+            ONLY_ACTIVE_ARCH=NO \
+            | xcpretty && exit ${PIPESTATUS[0]}
+
+      - name: Generate baseline from base branch
+        run: |
+          xcrun swift-api-digester -dump-sdk \
+            -module MinFraudDevice \
+            -sdk "$(xcrun --show-sdk-path --sdk iphonesimulator)" \
+            -target arm64-apple-ios15.0-simulator \
+            -I .build/api-compat-base/Build/Products/Debug-iphonesimulator \
+            -swift-only \
+            -o .build/api-baseline.json
+
+      - name: Checkout PR branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          clean: false
+
+      - name: Build PR branch
+        run: |
+          xcodebuild build \
+            -scheme MinFraudDevice \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath .build/api-compat-pr \
             ONLY_ACTIVE_ARCH=NO \
             | xcpretty && exit ${PIPESTATUS[0]}
 
@@ -35,10 +61,10 @@ jobs:
         run: |
           DIAGS=$(xcrun swift-api-digester -diagnose-sdk \
             -module MinFraudDevice \
-            -baseline-path api-baseline.json \
+            -baseline-path .build/api-baseline.json \
             -sdk "$(xcrun --show-sdk-path --sdk iphonesimulator)" \
             -target arm64-apple-ios15.0-simulator \
-            -I .build/api-compat/Build/Products/Debug-iphonesimulator \
+            -I .build/api-compat-pr/Build/Products/Debug-iphonesimulator \
             -swift-only \
             -compiler-style-diags 2>&1)
 
@@ -46,8 +72,8 @@ jobs:
             echo "::error::API breaking changes detected:"
             echo "$DIAGS" | grep "API breakage:"
             echo ""
-            echo "If this change is intentional, update api-baseline.json in your PR by"
-            echo "regenerating it with xcrun swift-api-digester -dump-sdk."
+            echo "This check compares the public API of this PR against the base branch."
+            echo "If this change is intentional, no action is needed — this is an informational check."
             exit 1
           fi
 
