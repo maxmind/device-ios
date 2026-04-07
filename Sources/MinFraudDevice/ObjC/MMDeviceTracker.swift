@@ -18,7 +18,7 @@ public final class ObjCDeviceTracker: NSObject {
 
     /// Collects device data and sends it to MaxMind servers.
     ///
-    /// On success, the completion handler receives an ``ObjCTrackingResult``
+    /// On success, the completion handler receives an ``MMTrackingResult``
     /// containing the tracking token. On failure, it receives an `NSError`.
     ///
     /// - Parameter completion: Called on the main queue with the result or error.
