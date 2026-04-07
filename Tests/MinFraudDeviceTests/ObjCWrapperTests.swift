@@ -17,10 +17,11 @@ final class ObjCWrapperTests: XCTestCase {
 
     func testObjCSDKConfigDefaults() {
         let config = ObjCSDKConfig(accountID: 12345)
-        XCTAssertEqual(config.config.accountID, 12345)
-        XCTAssertNil(config.config.serverURL)
-        XCTAssertFalse(config.config.loggingEnabled)
-        XCTAssertEqual(config.config.collectionIntervalSeconds, 0)
+        XCTAssertNotNil(config)
+        XCTAssertEqual(config?.config.accountID, 12345)
+        XCTAssertNil(config?.config.serverURL)
+        XCTAssertFalse(config!.config.loggingEnabled)
+        XCTAssertEqual(config?.config.collectionIntervalSeconds, 0)
     }
 
     func testObjCSDKConfigAllOptions() {
@@ -31,10 +32,35 @@ final class ObjCWrapperTests: XCTestCase {
             loggingEnabled: true,
             collectionIntervalSeconds: 300
         )
-        XCTAssertEqual(config.config.accountID, 99999)
-        XCTAssertEqual(config.config.serverURL, url)
-        XCTAssertTrue(config.config.loggingEnabled)
-        XCTAssertEqual(config.config.collectionIntervalSeconds, 300)
+        XCTAssertNotNil(config)
+        XCTAssertEqual(config?.config.accountID, 99999)
+        XCTAssertEqual(config?.config.serverURL, url)
+        XCTAssertTrue(config!.config.loggingEnabled)
+        XCTAssertEqual(config?.config.collectionIntervalSeconds, 300)
+    }
+
+    func testObjCSDKConfigReturnsNilForInvalidAccountID() {
+        XCTAssertNil(ObjCSDKConfig(accountID: 0))
+        XCTAssertNil(ObjCSDKConfig(accountID: -1))
+    }
+
+    func testObjCSDKConfigReturnsNilForInvalidCollectionInterval() {
+        XCTAssertNil(
+            ObjCSDKConfig(
+                accountID: 12345,
+                serverURL: nil,
+                loggingEnabled: false,
+                collectionIntervalSeconds: 60
+            )
+        )
+        XCTAssertNil(
+            ObjCSDKConfig(
+                accountID: 12345,
+                serverURL: nil,
+                loggingEnabled: false,
+                collectionIntervalSeconds: 299
+            )
+        )
     }
 
     // MARK: - MMDeviceTracker collectAndSend success
@@ -52,7 +78,7 @@ final class ObjCWrapperTests: XCTestCase {
         }
 
         let config = ObjCSDKConfig(accountID: 12345, serverURL: URL(string: "https://test.maxmind.com")!,
-                                   loggingEnabled: false, collectionIntervalSeconds: 0)
+                                   loggingEnabled: false, collectionIntervalSeconds: 0)!
         let tracker = ObjCDeviceTracker(config: config)
         let expectation = expectation(description: "collectAndSend completes")
 
@@ -82,7 +108,7 @@ final class ObjCWrapperTests: XCTestCase {
         }
 
         let config = ObjCSDKConfig(accountID: 12345, serverURL: URL(string: "https://test.maxmind.com")!,
-                                   loggingEnabled: false, collectionIntervalSeconds: 0)
+                                   loggingEnabled: false, collectionIntervalSeconds: 0)!
         let tracker = ObjCDeviceTracker(config: config)
         let expectation = expectation(description: "collectAndSend fails")
 

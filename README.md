@@ -97,6 +97,10 @@ The SDK provides Objective-C compatible wrapper classes with an `MM` prefix.
 @import MinFraudDevice;
 
 MMSDKConfig *config = [[MMSDKConfig alloc] initWithAccountID:123456];
+if (!config) {
+    // Handle invalid configuration
+    return;
+}
 MMDeviceTracker *tracker = [[MMDeviceTracker alloc] initWithConfig:config];
 
 [tracker collectAndSendWithCompletion:^(MMTrackingResult *result, NSError *error) {
