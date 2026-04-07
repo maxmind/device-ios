@@ -150,4 +150,4 @@ disabled, `logger` is `nil` and all `logger?.method()` calls are no-ops.
 ## Error Types
 
 - `MinFraudDeviceError` (public) — `idfvUnavailable`
-- `APIError` (public) — `serverError(statusCode:message:)`
+- `APIError` (public) — `serverError(statusCode:message:)`, `responseDecodingFailed(String)`

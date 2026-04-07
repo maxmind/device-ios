@@ -77,10 +77,10 @@ final class DeviceAPIClientTests: XCTestCase {
             do {
                 _ = try await client.sendDeviceData(testDeviceData)
                 XCTFail("Expected error for case: \(tc.label)")
-            } catch is DecodingError {
-                // Expected
+            } catch is APIError {
+                // Expected: APIError.responseDecodingFailed
             } catch {
-                XCTFail("Expected DecodingError for case \(tc.label), got: \(error)")
+                XCTFail("Expected APIError.responseDecodingFailed for case \(tc.label), got: \(error)")
             }
         }
     }

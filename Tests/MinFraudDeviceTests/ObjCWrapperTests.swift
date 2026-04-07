@@ -140,9 +140,16 @@ final class ObjCWrapperTests: XCTestCase {
         XCTAssertEqual(error.code, 1)
     }
 
-    func testAPIErrorBridgesToNSError() {
+    func testAPIErrorServerErrorBridgesToNSError() {
         let error = APIError.serverError(statusCode: 403, message: "Forbidden") as NSError
         XCTAssertEqual(error.domain, "\(SDKConfig.identifier).api")
         XCTAssertEqual(error.code, 403)
+    }
+
+    func testAPIErrorResponseDecodingFailedBridgesToNSError() {
+        let error = APIError.responseDecodingFailed("missing field") as NSError
+        XCTAssertEqual(error.domain, "\(SDKConfig.identifier).api")
+        XCTAssertEqual(error.code, -1)
+        XCTAssertTrue(error.localizedDescription.contains("missing field"))
     }
 }

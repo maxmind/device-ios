@@ -21,10 +21,16 @@ public enum APIError: Error, LocalizedError {
     /// The server returned a non-success HTTP status code.
     case serverError(statusCode: Int, message: String)
 
+    /// The server returned a success status code but the response body
+    /// could not be decoded.
+    case responseDecodingFailed(String)
+
     public var errorDescription: String? {
         switch self {
         case .serverError(let statusCode, let message):
             return "Server returned \(statusCode): \(message)"
+        case .responseDecodingFailed(let detail):
+            return "Failed to decode server response: \(detail)"
         }
     }
 }
@@ -35,6 +41,7 @@ extension APIError: CustomNSError {
     public var errorCode: Int {
         switch self {
         case .serverError(let statusCode, _): return statusCode
+        case .responseDecodingFailed: return -1
         }
     }
 
@@ -42,6 +49,8 @@ extension APIError: CustomNSError {
         switch self {
         case .serverError(_, let message):
             return [NSLocalizedDescriptionKey: errorDescription ?? message]
+        case .responseDecodingFailed:
+            return [NSLocalizedDescriptionKey: errorDescription ?? "Unknown decoding error"]
         }
     }
 }
@@ -114,7 +123,11 @@ final class DeviceAPIClient: Sendable {
             throw APIError.serverError(statusCode: httpResponse.statusCode, message: message)
         }
 
-        let decoder = JSONDecoder()
-        return try decoder.decode(ServerResponse.self, from: data)
+        do {
+            let decoder = JSONDecoder()
+            return try decoder.decode(ServerResponse.self, from: data)
+        } catch {
+            throw APIError.responseDecodingFailed(error.localizedDescription)
+        }
     }
 }
