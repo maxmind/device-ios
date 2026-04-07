@@ -7,6 +7,8 @@ import Foundation
 @objc(MMDeviceTracker)
 public final class ObjCDeviceTracker: NSObject {
     private let tracker: DeviceTracker
+    private var isShutDown = false
+    private let lock = NSLock()
 
     /// Creates a new device tracker with the given configuration.
     ///
@@ -20,23 +22,38 @@ public final class ObjCDeviceTracker: NSObject {
     ///
     /// On success, the completion handler receives an ``MMTrackingResult``
     /// containing the tracking token. On failure, it receives an `NSError`.
+    /// The completion handler is not called if ``shutdown`` has been called
+    /// before the operation completes.
     ///
     /// - Parameter completion: Called on the main queue with the result or error.
     @objc
     public func collectAndSend(completion: @escaping (ObjCTrackingResult?, NSError?) -> Void) {
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
+            guard let self else { return }
             do {
                 let result = try await tracker.collectAndSend()
+                self.lock.lock()
+                defer { self.lock.unlock() }
+                guard !self.isShutDown else { return }
                 completion(ObjCTrackingResult(result: result), nil)
             } catch {
+                self.lock.lock()
+                defer { self.lock.unlock() }
+                guard !self.isShutDown else { return }
                 completion(nil, error as NSError)
             }
         }
     }
 
     /// Cancels automatic collection and releases resources.
+    ///
+    /// Any in-flight ``collectAndSend`` call will complete silently
+    /// without invoking its completion handler.
     @objc
     public func shutdown() {
+        lock.lock()
+        defer { lock.unlock() }
+        isShutDown = true
         tracker.shutdown()
     }
 }
