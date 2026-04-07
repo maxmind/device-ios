@@ -119,7 +119,7 @@ To capture both IP addresses for a device:
 2. If response contains `ip_version: 6`, POST to `d-ipv4.mmapiws.com/device/ios`
    with request duration
 3. IPv4 failure is non-fatal (logged, not propagated)
-4. Stored ID from IPv6 response is persisted and returned as a tracking token
+4. Stored ID from IPv6 response is returned to the caller; `DeviceTracker` persists it in the keychain and returns it as a tracking token
 
 If a custom server URL is configured, dual-request is disabled.
 
