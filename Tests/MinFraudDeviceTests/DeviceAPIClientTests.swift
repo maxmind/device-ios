@@ -167,11 +167,11 @@ final class DeviceAPIClientTests: XCTestCase {
     // MARK: - Dual Request Tests
 
     private var validIPv6Response: String {
-        "{\"stored_id\":\"abc123:hmac456\",\"ip_version\":6}"
+        "{\"stored_id\":\"ipv6-stored-id\",\"ip_version\":6}"
     }
 
     private var validIPv4Response: String {
-        "{\"stored_id\":\"abc123:hmac456\",\"ip_version\":4}"
+        "{\"stored_id\":\"ipv4-stored-id\",\"ip_version\":4}"
     }
 
     func testDualRequestSendsToIPv6AndIPv4Endpoints() async throws {
@@ -191,11 +191,12 @@ final class DeviceAPIClientTests: XCTestCase {
         }
 
         let client = makeClient(serverURL: nil)
-        _ = try await client.sendDeviceData(testDeviceData)
+        let result = try await client.sendDeviceData(testDeviceData)
 
         XCTAssertEqual(capturedURLs.count, 2)
         XCTAssertTrue(capturedURLs[0].contains("d-ipv6.mmapiws.com"))
         XCTAssertTrue(capturedURLs[1].contains("d-ipv4.mmapiws.com"))
+        XCTAssertEqual(result.storedID, "ipv6-stored-id")
     }
 
     func testDualRequestIncludesRequestDurationOnIPv4Only() async throws {
@@ -276,7 +277,7 @@ final class DeviceAPIClientTests: XCTestCase {
         let client = makeClient(serverURL: nil)
         let response = try await client.sendDeviceData(testDeviceData)
 
-        XCTAssertEqual(response.storedID, "abc123:hmac456")
+        XCTAssertEqual(response.storedID, "ipv6-stored-id")
         XCTAssertEqual(requestCount, 2)
     }
 }
