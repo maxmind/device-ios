@@ -22,6 +22,10 @@ extension MinFraudDeviceError: CustomNSError {
         case .idfvUnavailable: return 1
         }
     }
+
+    public var errorUserInfo: [String: Any] {
+        [NSLocalizedDescriptionKey: errorDescription ?? "Unknown error"]
+    }
 }
 
 /// Main entry point for the MinFraud Device SDK.
