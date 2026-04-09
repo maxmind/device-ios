@@ -101,6 +101,7 @@ final class DeviceTrackerTests: XCTestCase {
         let result = try await tracker.collectAndSend()
 
         XCTAssertEqual(result.trackingToken, "abc123:hmac456")
+        XCTAssertNil(mockStorage.get(forKey: KeychainStorage.storedIDKey))
     }
 
     func testCollectAndSendPropagatesAPIError() async {
