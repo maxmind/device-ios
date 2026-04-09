@@ -22,16 +22,18 @@ public final class ObjCDeviceTracker: NSObject {
     ///
     /// On success, the completion handler receives an ``MMTrackingResult``
     /// containing the tracking token. On failure, it receives an `NSError`.
-    /// The completion handler is not called if ``shutdown`` has been called
-    /// before the operation completes.
+    ///
+    /// The completion handler is always called exactly once unless
+    /// ``shutdown`` is called before the operation completes. The tracker
+    /// is kept alive until the operation finishes, even if all other
+    /// references are released.
     ///
     /// - Parameter completion: Called on the main queue with the result or error.
     @objc
     public func collectAndSend(completion: @escaping (ObjCTrackingResult?, NSError?) -> Void) {
-        Task { @MainActor [weak self] in
-            guard let self else { return }
+        Task { @MainActor in
             do {
-                let result = try await tracker.collectAndSend()
+                let result = try await self.tracker.collectAndSend()
                 self.lock.lock()
                 defer { self.lock.unlock() }
                 guard !self.isShutDown else { return }
