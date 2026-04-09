@@ -57,20 +57,20 @@ let config = SDKConfig(
     accountID: 123456,           // Your MaxMind account ID
     serverURL: nil,              // nil = default dual-stack servers
     loggingEnabled: false,       // enable logging via os.Logger
-    collectionIntervalSeconds: 0 // 0 = disabled; >= 300 = automatic collection interval in seconds
+    collectionIntervalSeconds: 0 // 0 = disabled; 300–86400 = automatic collection interval in seconds
 )
 ```
 
-| Parameter                   | Type | Default    | Description                                                |
-| --------------------------- | ---- | ---------- | ---------------------------------------------------------- |
-| `accountID`                 | Int  | _required_ | Your MaxMind account ID                                    |
-| `serverURL`                 | URL? | `nil`      | Custom server URL (`nil` = default dual-stack servers)     |
-| `loggingEnabled`            | Bool | `false`    | Enable logging via `os.Logger`                             |
-| `collectionIntervalSeconds` | Int  | `0`        | Auto-collection interval in seconds (0 = disabled, >= 300) |
+| Parameter                   | Type | Default    | Description                                                   |
+| --------------------------- | ---- | ---------- | ------------------------------------------------------------- |
+| `accountID`                 | Int  | _required_ | Your MaxMind account ID                                       |
+| `serverURL`                 | URL? | `nil`      | Custom server URL (`nil` = default dual-stack servers)        |
+| `loggingEnabled`            | Bool | `false`    | Enable logging via `os.Logger`                                |
+| `collectionIntervalSeconds` | Int  | `0`        | Auto-collection interval in seconds (0 = disabled, 300–86400) |
 
 ### Automatic Collection
 
-When `collectionIntervalSeconds` is set to a value of 300 or greater, the
+When `collectionIntervalSeconds` is set to a value between 300 and 86400, the
 tracker automatically collects and sends device data at the specified interval:
 
 ```swift

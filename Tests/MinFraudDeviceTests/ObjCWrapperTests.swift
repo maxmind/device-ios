@@ -61,6 +61,14 @@ final class ObjCWrapperTests: XCTestCase {
                 collectionIntervalSeconds: 299
             )
         )
+        XCTAssertNil(
+            ObjCSDKConfig(
+                accountID: 12345,
+                serverURL: nil,
+                loggingEnabled: false,
+                collectionIntervalSeconds: 86401
+            )
+        )
     }
 
     // MARK: - MMDeviceTracker collectAndSend success

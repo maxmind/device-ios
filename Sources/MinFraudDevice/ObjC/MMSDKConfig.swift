@@ -11,14 +11,14 @@ public final class ObjCSDKConfig: NSObject {
     /// Creates a new SDK configuration with all options.
     ///
     /// Returns `nil` if `accountID` is not positive or
-    /// `collectionIntervalSeconds` is not `0` or at least `300`.
+    /// `collectionIntervalSeconds` is not `0` or between `300` and `86400`.
     ///
     /// - Parameters:
     ///   - accountID: Your MaxMind account ID. Must be positive.
     ///   - serverURL: Custom server URL, or `nil` to use default servers.
     ///   - loggingEnabled: Whether to enable logging.
     ///   - collectionIntervalSeconds: Automatic collection interval in seconds.
-    ///     Must be `0` (disabled) or at least `300`.
+    ///     Must be `0` (disabled) or between `300` and `86400`.
     @objc
     public init?(
         accountID: Int,
@@ -27,7 +27,8 @@ public final class ObjCSDKConfig: NSObject {
         collectionIntervalSeconds: Int
     ) {
         guard accountID > 0,
-              collectionIntervalSeconds == 0 || collectionIntervalSeconds >= 300
+              collectionIntervalSeconds == 0
+                || (collectionIntervalSeconds >= 300 && collectionIntervalSeconds <= 86_400)
         else {
             return nil
         }

@@ -98,7 +98,7 @@ subclasses and completion-handler APIs.
 
    - Immutable configuration with precondition validation
    - Default servers: `d-ipv6.mmapiws.com` and `d-ipv4.mmapiws.com`
-   - Collection interval: 0 (disabled) or >= 300 seconds
+   - Collection interval: 0 (disabled) or 300–86400 seconds
 
 3. **Data Collection Layer** (`Collector/DeviceDataCollector.swift`)
 
