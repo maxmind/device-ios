@@ -127,7 +127,7 @@ final class DeviceAPIClient: Sendable {
             let decoder = JSONDecoder()
             return try decoder.decode(ServerResponse.self, from: data)
         } catch {
-            throw APIError.responseDecodingFailed(error.localizedDescription)
+            throw APIError.responseDecodingFailed(String(describing: error))
         }
     }
 }
