@@ -138,6 +138,7 @@ final class ObjCWrapperTests: XCTestCase {
         let error = MinFraudDeviceError.idfvUnavailable as NSError
         XCTAssertEqual(error.domain, SDKConfig.identifier)
         XCTAssertEqual(error.code, 1)
+        XCTAssertTrue(error.localizedDescription.contains("IDFV"))
     }
 
     func testAPIErrorServerErrorBridgesToNSError() {
