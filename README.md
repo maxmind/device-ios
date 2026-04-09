@@ -35,7 +35,7 @@ let tracker = DeviceTracker(config: config)
 
 ### 2. Collect and Send Device Data
 
-And, use the tracking token in your calls to the minFraud API.
+Use the tracking token in your calls to the minFraud API.
 
 ```swift
 do {
