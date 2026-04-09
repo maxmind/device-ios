@@ -78,7 +78,7 @@ final class DeviceAPIClient: Sendable {
     private func sendWithDualRequest(_ deviceData: DeviceData) async throws -> ServerResponse {
         let ipv6URL = URL(string: "https://\(SDKConfig.defaultIPv6Host)\(SDKConfig.endpointPath)")!
 
-        // Use a monotonic approach for calculating request duration.
+        // ProcessInfo.systemUptime uses a monotonic clock, and is therefore immune to wall-clock drift from NTP adjustments.
         let startTime = ProcessInfo.processInfo.systemUptime
         let ipv6Response = try await sendToURL(deviceData, url: ipv6URL)
         let requestDurationMS = Int((ProcessInfo.processInfo.systemUptime - startTime) * 1000)
