@@ -223,10 +223,8 @@ final class DeviceAPIClientTests: XCTestCase {
 
         XCTAssertEqual(capturedBodies.count, 2)
         XCTAssertNil(capturedBodies[0]["request_duration"])
-        XCTAssertNotNil(capturedBodies[1]["request_duration"])
-        if let duration = capturedBodies[1]["request_duration"] as? Int {
-            XCTAssertGreaterThanOrEqual(duration, 0)
-        }
+        let duration = try XCTUnwrap(capturedBodies[1]["request_duration"] as? Int)
+        XCTAssertGreaterThanOrEqual(duration, 0)
     }
 
     func testDualRequestSkipsIPv4WhenIPVersionIsNot6() async throws {
