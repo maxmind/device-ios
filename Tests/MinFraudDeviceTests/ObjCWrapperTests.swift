@@ -124,6 +124,33 @@ final class ObjCWrapperTests: XCTestCase {
         tracker.shutdown()
     }
 
+    // MARK: - MMDeviceTracker shutdown suppresses callback
+
+    func testObjCShutdownSuppressesCompletionHandler() {
+        // Use a handler that blocks, keeping the request in-flight.
+        MockURLProtocol.requestHandler = { _ in
+            Thread.sleep(forTimeInterval: 5)
+            throw URLError(.cancelled)
+        }
+
+        let config = ObjCSDKConfig(accountID: 12345, serverURL: URL(string: "https://test.maxmind.com")!,
+                                   loggingEnabled: false, collectionIntervalSeconds: 0)!
+        let tracker = ObjCDeviceTracker(config: config)
+
+        var completionCalled = false
+        tracker.collectAndSend { _, _ in
+            completionCalled = true
+        }
+
+        tracker.shutdown()
+
+        let expectation = expectation(description: "wait for potential callback")
+        expectation.isInverted = true
+        waitForExpectations(timeout: 1)
+
+        XCTAssertFalse(completionCalled)
+    }
+
     // MARK: - MMTrackingResult
 
     func testObjCTrackingResultRedactsDescription() {
