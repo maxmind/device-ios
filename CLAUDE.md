@@ -110,6 +110,7 @@ subclasses and completion-handler APIs.
    - URLSession-based HTTP client
    - Dual-stack IPv6/IPv4 flow (see below)
    - Throws `APIError.serverError` on non-success responses
+   - Throws `APIError.responseDecodingFailed` on unparseable success responses
 
 ### Dual-Request Flow (IPv6/IPv4)
 
@@ -119,7 +120,8 @@ To capture both IP addresses for a device:
 2. If response contains `ip_version: 6`, POST to `d-ipv4.mmapiws.com/device/ios`
    with request duration
 3. IPv4 failure is non-fatal (logged, not propagated)
-4. Stored ID from IPv6 response is returned to the caller; `DeviceTracker` persists it in the keychain and returns it as a tracking token
+4. Stored ID from IPv6 response is returned to the caller; `DeviceTracker`
+   persists it in the keychain and returns it as a tracking token
 
 If a custom server URL is configured, dual-request is disabled.
 
@@ -150,4 +152,5 @@ disabled, `logger` is `nil` and all `logger?.method()` calls are no-ops.
 ## Error Types
 
 - `MinFraudDeviceError` (public) — `idfvUnavailable`
-- `APIError` (public) — `serverError(statusCode:message:)`, `responseDecodingFailed(String)`
+- `APIError` (public) — `serverError(statusCode:message:)`,
+  `responseDecodingFailed(String)`
