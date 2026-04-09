@@ -60,6 +60,20 @@ final class DeviceDataCollectorTests: XCTestCase {
         }
     }
 
+    func testCollectReturnsIDFVEvenWhenCachingFails() throws {
+        let storage = MockKeychainStorage()
+        storage.shouldFailOnSet = true
+        let collector = DeviceDataCollector(
+            storage: storage,
+            idfvProvider: { "SYSTEM-IDFV-123" }
+        )
+
+        let data = try collector.collect()
+
+        XCTAssertEqual(data.idfv, "SYSTEM-IDFV-123")
+        XCTAssertNil(storage.get(forKey: KeychainStorage.idfvKey))
+    }
+
     func testCollectIncludesStoredIDFromKeychain() throws {
         let storage = MockKeychainStorage()
         _ = storage.set("existing-stored-id", forKey: KeychainStorage.storedIDKey)
