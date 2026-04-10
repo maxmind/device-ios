@@ -10,8 +10,8 @@
    git checkout -b release/X.Y.Z
    ```
 
-2. Update the version string in the User-Agent header in
-   `Sources/MinFraudDevice/Network/DeviceAPIClient.swift`.
+2. Update the version constant in
+   `Sources/MinFraudDevice/Config/SDKConfig.swift`.
 3. Update the version in the README.md installation example if needed.
 4. Update `CHANGELOG.md`: set the release date and document any final changes.
 5. Verify the privacy manifest is up to date

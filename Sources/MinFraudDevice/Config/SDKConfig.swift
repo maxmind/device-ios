@@ -12,7 +12,7 @@ public struct SDKConfig: Sendable {
     public let loggingEnabled: Bool
 
     /// Automatic collection interval in seconds. Set to `0` to disable,
-    /// or a value of `300` or greater to enable periodic collection.
+    /// or a value between `300` and `86400` to enable periodic collection.
     public let collectionIntervalSeconds: Int
 
     /// Creates a new SDK configuration.
@@ -22,7 +22,7 @@ public struct SDKConfig: Sendable {
     ///   - serverURL: Custom server URL, or `nil` to use default servers.
     ///   - loggingEnabled: Whether to enable logging. Defaults to `false`.
     ///   - collectionIntervalSeconds: Automatic collection interval in seconds.
-    ///     Must be `0` (disabled) or at least `300`. Defaults to `0`.
+    ///     Must be `0` (disabled) or between `300` and `86400`. Defaults to `0`.
     public init(
         accountID: Int,
         serverURL: URL? = nil,
@@ -31,8 +31,9 @@ public struct SDKConfig: Sendable {
     ) {
         precondition(accountID > 0, "Account ID must be positive")
         precondition(
-            collectionIntervalSeconds == 0 || collectionIntervalSeconds >= 300,
-            "Collection interval must be 0 (disabled) or at least 300 seconds"
+            collectionIntervalSeconds == 0
+                || (collectionIntervalSeconds >= 300 && collectionIntervalSeconds <= 86_400),
+            "Collection interval must be 0 (disabled) or between 300 and 86400 seconds"
         )
         self.accountID = accountID
         self.serverURL = serverURL

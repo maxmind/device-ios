@@ -6,16 +6,25 @@ public enum MinFraudDeviceError: Error, LocalizedError, Equatable {
     /// The Identifier for Vendor (IDFV) could not be obtained from the system or keychain.
     case idfvUnavailable
 
-    /// The server response did not include a tracking token.
-    case missingTrackingToken
-
     public var errorDescription: String? {
         switch self {
         case .idfvUnavailable:
             return "Unable to obtain an Identifier for Vendor (IDFV)"
-        case .missingTrackingToken:
-            return "Server response did not include a tracking token"
         }
+    }
+}
+
+extension MinFraudDeviceError: CustomNSError {
+    public static var errorDomain: String { SDKConfig.identifier }
+
+    public var errorCode: Int {
+        switch self {
+        case .idfvUnavailable: return 1
+        }
+    }
+
+    public var errorUserInfo: [String: Any] {
+        [NSLocalizedDescriptionKey: errorDescription ?? "Unknown error"]
     }
 }
 
@@ -81,28 +90,25 @@ public final class DeviceTracker: @unchecked Sendable {
 
     /// Collects device data and sends it to MaxMind servers.
     ///
-    /// On success, the tracking token is persisted in the keychain for
-    /// inclusion in subsequent requests.
+    /// On success, the stored ID is persisted in the keychain for
+    /// inclusion in subsequent requests, and returned as a tracking token.
     ///
     /// - Returns: A ``TrackingResult`` containing the tracking token.
     /// - Throws: ``MinFraudDeviceError/idfvUnavailable`` if the device
-    ///   identifier cannot be obtained, ``MinFraudDeviceError/missingTrackingToken``
-    ///   if the server response does not include a token, or an ``APIError``
-    ///   if the network request fails.
+    ///   identifier cannot be obtained, or an ``APIError``
+    ///   if the server returns a non-success status code or the response
+    ///   body cannot be decoded.
     public func collectAndSend() async throws -> TrackingResult {
         let deviceData = try collector.collect()
         let response = try await apiClient.sendDeviceData(deviceData)
 
-        guard let token = response.trackingToken,
-              !token.trimmingCharacters(in: .whitespaces).isEmpty else {
-            throw MinFraudDeviceError.missingTrackingToken
+        if storage.set(response.storedID, forKey: KeychainStorage.storedIDKey) {
+            logger?.debug("Cached stored ID from server response in keychain")
+        } else {
+            logger?.warning("Failed to cache stored ID in keychain")
         }
 
-        if storage.set(token, forKey: KeychainStorage.trackingTokenKey) {
-            logger?.debug("Tracking token saved from server response")
-        }
-
-        return TrackingResult(trackingToken: token)
+        return TrackingResult(trackingToken: response.storedID)
     }
 
     /// Cancels automatic collection and releases resources.
@@ -140,8 +146,6 @@ public final class DeviceTracker: @unchecked Sendable {
     }
 
     deinit {
-        lock.lock()
-        defer { lock.unlock() }
         automaticCollectionTask?.cancel()
     }
 }

@@ -6,7 +6,7 @@ iOS SDK for collecting and reporting device data to MaxMind.
 
 - iOS 15.0+
 - Swift 5.9+
-- Xcode 14.3+
+- Xcode 15.0+
 
 ## Installation
 
@@ -35,7 +35,7 @@ let tracker = DeviceTracker(config: config)
 
 ### 2. Collect and Send Device Data
 
-And, use the tracking token in your calls to the minFraud API.
+Use the tracking token in your calls to the minFraud API.
 
 ```swift
 do {
@@ -57,20 +57,20 @@ let config = SDKConfig(
     accountID: 123456,           // Your MaxMind account ID
     serverURL: nil,              // nil = default dual-stack servers
     loggingEnabled: false,       // enable logging via os.Logger
-    collectionIntervalSeconds: 0 // 0 = disabled; >= 300 = automatic collection interval in seconds
+    collectionIntervalSeconds: 0 // 0 = disabled; 300–86400 = automatic collection interval in seconds
 )
 ```
 
-| Parameter                   | Type | Default    | Description                                                |
-| --------------------------- | ---- | ---------- | ---------------------------------------------------------- |
-| `accountID`                 | Int  | _required_ | Your MaxMind account ID                                    |
-| `serverURL`                 | URL? | `nil`      | Custom server URL (`nil` = default dual-stack servers)     |
-| `loggingEnabled`            | Bool | `false`    | Enable logging via `os.Logger`                             |
-| `collectionIntervalSeconds` | Int  | `0`        | Auto-collection interval in seconds (0 = disabled, >= 300) |
+| Parameter                   | Type | Default    | Description                                                   |
+| --------------------------- | ---- | ---------- | ------------------------------------------------------------- |
+| `accountID`                 | Int  | _required_ | Your MaxMind account ID                                       |
+| `serverURL`                 | URL? | `nil`      | Custom server URL (`nil` = default dual-stack servers)        |
+| `loggingEnabled`            | Bool | `false`    | Enable logging via `os.Logger`                                |
+| `collectionIntervalSeconds` | Int  | `0`        | Auto-collection interval in seconds (0 = disabled, 300–86400) |
 
 ### Automatic Collection
 
-When `collectionIntervalSeconds` is set to a value of 300 or greater, the
+When `collectionIntervalSeconds` is set to a value between 300 and 86400, the
 tracker automatically collects and sends device data at the specified interval:
 
 ```swift
@@ -87,6 +87,32 @@ Call `shutdown()` to cancel automatic collection and release resources:
 
 ```swift
 tracker.shutdown()
+```
+
+### Objective-C
+
+The SDK provides Objective-C compatible wrapper classes with an `MM` prefix.
+
+```objc
+@import MinFraudDevice;
+
+MMSDKConfig *config = [[MMSDKConfig alloc] initWithAccountID:123456];
+if (!config) {
+    // Handle invalid configuration
+    return;
+}
+MMDeviceTracker *tracker = [[MMDeviceTracker alloc] initWithConfig:config];
+
+[tracker collectAndSendWithCompletion:^(MMTrackingResult *result, NSError *error) {
+    if (error) {
+        NSLog(@"Failed to send device data: %@", error);
+        return;
+    }
+    [self sendToBackend:result.trackingToken];
+}];
+
+// When done:
+[tracker shutdown];
 ```
 
 ## Privacy

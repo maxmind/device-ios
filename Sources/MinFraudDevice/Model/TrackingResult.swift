@@ -12,7 +12,10 @@ public struct TrackingResult: Sendable, CustomStringConvertible {
     public let trackingToken: String
 
     init(trackingToken: String) {
-        precondition(!trackingToken.trimmingCharacters(in: .whitespaces).isEmpty, "Tracking token must not be blank")
+        precondition(
+            !trackingToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            "Tracking token must not be blank"
+        )
         self.trackingToken = trackingToken
     }
 

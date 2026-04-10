@@ -22,6 +22,10 @@ final class DeviceTrackerTests: XCTestCase {
         super.tearDown()
     }
 
+    private var validResponse: String {
+        "{\"stored_id\":\"abc123:hmac456\",\"ip_version\":6}"
+    }
+
     private func makeTracker(
         accountID: Int = 99999,
         serverURL: URL? = URL(string: "https://test.maxmind.com"),
@@ -49,16 +53,13 @@ final class DeviceTrackerTests: XCTestCase {
 
     func testCollectAndSendReturnsTrackingResult() async throws {
         MockURLProtocol.requestHandler = { _ in
-            let data = Data("""
-            {"tracking_token":"abc123:hmac456","ip_version":6}
-            """.utf8)
             let response = HTTPURLResponse(
                 url: URL(string: "https://test.maxmind.com")!,
                 statusCode: 200,
                 httpVersion: nil,
                 headerFields: ["Content-Type": "application/json"]
             )!
-            return (response, data)
+            return (response, Data(self.validResponse.utf8))
         }
 
         let tracker = makeTracker()
@@ -67,88 +68,32 @@ final class DeviceTrackerTests: XCTestCase {
         XCTAssertEqual(result.trackingToken, "abc123:hmac456")
     }
 
-    func testCollectAndSendSavesTrackingTokenToKeychain() async throws {
+    func testCollectAndSendSavesStoredIDToKeychain() async throws {
         MockURLProtocol.requestHandler = { _ in
-            let data = Data("""
-            {"tracking_token":"saved-token"}
-            """.utf8)
             let response = HTTPURLResponse(
                 url: URL(string: "https://test.maxmind.com")!,
                 statusCode: 200,
                 httpVersion: nil,
                 headerFields: ["Content-Type": "application/json"]
             )!
-            return (response, data)
+            return (response, Data(self.validResponse.utf8))
         }
 
         let tracker = makeTracker()
         _ = try await tracker.collectAndSend()
 
-        XCTAssertEqual(mockStorage.get(forKey: KeychainStorage.trackingTokenKey), "saved-token")
-    }
-
-    func testCollectAndSendThrowsOnMissingTrackingToken() async {
-        MockURLProtocol.requestHandler = { _ in
-            let data = Data("""
-            {"tracking_token":null}
-            """.utf8)
-            let response = HTTPURLResponse(
-                url: URL(string: "https://test.maxmind.com")!,
-                statusCode: 200,
-                httpVersion: nil,
-                headerFields: ["Content-Type": "application/json"]
-            )!
-            return (response, data)
-        }
-
-        let tracker = makeTracker()
-        do {
-            _ = try await tracker.collectAndSend()
-            XCTFail("Expected error to be thrown")
-        } catch is MinFraudDeviceError {
-            // Expected
-        } catch {
-            XCTFail("Unexpected error type: \(error)")
-        }
-    }
-
-    func testCollectAndSendThrowsOnBlankTrackingToken() async {
-        MockURLProtocol.requestHandler = { _ in
-            let data = Data("""
-            {"tracking_token":"   "}
-            """.utf8)
-            let response = HTTPURLResponse(
-                url: URL(string: "https://test.maxmind.com")!,
-                statusCode: 200,
-                httpVersion: nil,
-                headerFields: ["Content-Type": "application/json"]
-            )!
-            return (response, data)
-        }
-
-        let tracker = makeTracker()
-        do {
-            _ = try await tracker.collectAndSend()
-            XCTFail("Expected error to be thrown")
-        } catch is MinFraudDeviceError {
-            // Expected
-        } catch {
-            XCTFail("Unexpected error type: \(error)")
-        }
+        XCTAssertEqual(mockStorage.get(forKey: KeychainStorage.storedIDKey), "abc123:hmac456")
     }
 
     func testCollectAndSendSucceedsWhenStorageSaveFails() async throws {
         MockURLProtocol.requestHandler = { _ in
-            let data = Data("""
-            {"tracking_token":"abc123:hmac456"}
-            """.utf8)
             let response = HTTPURLResponse(
                 url: URL(string: "https://test.maxmind.com")!,
                 statusCode: 200,
                 httpVersion: nil,
                 headerFields: ["Content-Type": "application/json"]
             )!
-            return (response, data)
+            return (response, Data(self.validResponse.utf8))
         }
 
         mockStorage.shouldFailOnSet = true
@@ -156,20 +101,18 @@ final class DeviceTrackerTests: XCTestCase {
         let result = try await tracker.collectAndSend()
 
         XCTAssertEqual(result.trackingToken, "abc123:hmac456")
+        XCTAssertNil(mockStorage.get(forKey: KeychainStorage.storedIDKey))
     }
 
     func testCollectAndSendPropagatesAPIError() async {
         MockURLProtocol.requestHandler = { _ in
-            let data = Data("""
-            {"error":"Server Error"}
-            """.utf8)
             let response = HTTPURLResponse(
                 url: URL(string: "https://test.maxmind.com")!,
                 statusCode: 500,
                 httpVersion: nil,
                 headerFields: nil
             )!
-            return (response, data)
+            return (response, Data("{}".utf8))
         }
 
         let tracker = makeTracker()
@@ -216,30 +159,54 @@ final class DeviceTrackerTests: XCTestCase {
 
     // MARK: - Shutdown
 
-    func testShutdownCancelsAutomaticCollection() async throws {
+    func testAutomaticCollectionSendsRequest() async throws {
+        let requestReceived = expectation(description: "Automatic collection sent a request")
+
         MockURLProtocol.requestHandler = { _ in
-            let data = Data("""
-            {"tracking_token":"test"}
-            """.utf8)
+            requestReceived.fulfill()
             let response = HTTPURLResponse(
                 url: URL(string: "https://test.maxmind.com")!,
                 statusCode: 200,
                 httpVersion: nil,
                 headerFields: ["Content-Type": "application/json"]
             )!
-            return (response, data)
+            return (response, Data(self.validResponse.utf8))
         }
 
         let tracker = makeTracker(collectionIntervalSeconds: 300)
 
-        // Give the auto-collection task a moment to start
-        try await Task.sleep(nanoseconds: 50_000_000) // 50ms
+        await fulfillment(of: [requestReceived], timeout: 2)
+        tracker.shutdown()
+    }
+
+    func testShutdownCancelsAutomaticCollection() async throws {
+        let secondRequest = expectation(description: "Second automatic collection request")
+        secondRequest.isInverted = true
+
+        var requestCount = 0
+        MockURLProtocol.requestHandler = { _ in
+            requestCount += 1
+            if requestCount >= 2 {
+                secondRequest.fulfill()
+            }
+            let response = HTTPURLResponse(
+                url: URL(string: "https://test.maxmind.com")!,
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: ["Content-Type": "application/json"]
+            )!
+            return (response, Data(self.validResponse.utf8))
+        }
+
+        let tracker = makeTracker(collectionIntervalSeconds: 300)
+
+        // Wait for the first automatic collection to complete.
+        try await Task.sleep(nanoseconds: 500_000_000)
 
         tracker.shutdown()
 
-        // After shutdown, the task should be cancelled
-        // Give it time to settle and verify no crashes
-        try await Task.sleep(nanoseconds: 200_000_000) // 200ms
+        // Verify no further requests are made after shutdown.
+        await fulfillment(of: [secondRequest], timeout: 1)
     }
 
     // MARK: - Public Init

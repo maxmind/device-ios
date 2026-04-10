@@ -1,13 +1,13 @@
 import Foundation
 
-struct DeviceData: Encodable {
+struct DeviceData: Encodable, Sendable {
     let idfv: String
-    let trackingToken: String?
+    let storedID: String?
     let requestDurationMS: Int?
 
     enum CodingKeys: String, CodingKey {
         case idfv
-        case trackingToken = "tracking_token"
+        case storedID = "stored_id"
         case requestDurationMS = "request_duration"
     }
 }

@@ -11,7 +11,7 @@ final class KeychainStorage: KeychainStoring, @unchecked Sendable {
     static let service = SDKConfig.identifier
 
     static let idfvKey = "idfv"
-    static let trackingTokenKey = "tracking_token"
+    static let storedIDKey = "stored_id"
 
     private let logger: Logger?
 

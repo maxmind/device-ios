@@ -22,7 +22,7 @@ Package Manager and targets iOS 15+.
 Follow Swift API Design Guidelines:
 
 - All-caps for acronyms: `SDKConfig`, `DeviceAPIClient`, `IDFV`, `URL`
-- Use "tracking token" in public API, matching the minFraud API terminology
+- Use "tracking token" in public API, "stored ID" internally and on the wire
 - Time units as suffixes: `collectionIntervalSeconds`, `requestDurationMS`
 
 ## Build Commands
@@ -82,6 +82,10 @@ xcodebuild build \
 Unlike the Android sibling SDK, there is no singleton pattern. Users create
 instances directly.
 
+Objective-C compatible wrappers (`MMSDKConfig`, `MMDeviceTracker`,
+`MMTrackingResult`) live in `ObjC/` and wrap the Swift types with `NSObject`
+subclasses and completion-handler APIs.
+
 ### Four-Layer Architecture
 
 1. **Public API Layer** (`DeviceTracker.swift`)
@@ -94,18 +98,19 @@ instances directly.
 
    - Immutable configuration with precondition validation
    - Default servers: `d-ipv6.mmapiws.com` and `d-ipv4.mmapiws.com`
-   - Collection interval: 0 (disabled) or >= 300 seconds
+   - Collection interval: 0 (disabled) or 300–86400 seconds
 
 3. **Data Collection Layer** (`Collector/DeviceDataCollector.swift`)
 
    - Retrieves IDFV from Keychain (cached) or system (`UIDevice`)
-   - Reads tracking token from Keychain for inclusion in requests
+   - Reads stored ID from Keychain for inclusion in requests
    - Throws `MinFraudDeviceError.idfvUnavailable` if IDFV cannot be obtained
 
 4. **Network Layer** (`Network/DeviceAPIClient.swift`)
    - URLSession-based HTTP client
    - Dual-stack IPv6/IPv4 flow (see below)
    - Throws `APIError.serverError` on non-success responses
+   - Throws `APIError.responseDecodingFailed` on unparseable success responses
 
 ### Dual-Request Flow (IPv6/IPv4)
 
@@ -115,13 +120,14 @@ To capture both IP addresses for a device:
 2. If response contains `ip_version: 6`, POST to `d-ipv4.mmapiws.com/device/ios`
    with request duration
 3. IPv4 failure is non-fatal (logged, not propagated)
-4. Tracking token from IPv6 response is returned and persisted
+4. Stored ID from IPv6 response is returned to the caller; `DeviceTracker`
+   persists it in the keychain and returns it as a tracking token
 
 If a custom server URL is configured, dual-request is disabled.
 
 ### Storage
 
-`KeychainStorage` persists IDFV and tracking token in the iOS Keychain:
+`KeychainStorage` persists IDFV and stored ID in the iOS Keychain:
 
 - Service: `com.maxmind.minfraud.device`
 - Accessibility: `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`
@@ -145,5 +151,6 @@ disabled, `logger` is `nil` and all `logger?.method()` calls are no-ops.
 
 ## Error Types
 
-- `MinFraudDeviceError` (public) — `idfvUnavailable`, `missingTrackingToken`
-- `APIError` (public) — `serverError(statusCode:message:)`
+- `MinFraudDeviceError` (public) — `idfvUnavailable`
+- `APIError` (public) — `serverError(statusCode:message:)`,
+  `responseDecodingFailed(String)`

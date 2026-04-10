@@ -21,10 +21,36 @@ public enum APIError: Error, LocalizedError {
     /// The server returned a non-success HTTP status code.
     case serverError(statusCode: Int, message: String)
 
+    /// The server returned a success status code but the response body
+    /// could not be decoded.
+    case responseDecodingFailed(String)
+
     public var errorDescription: String? {
         switch self {
         case .serverError(let statusCode, let message):
             return "Server returned \(statusCode): \(message)"
+        case .responseDecodingFailed(let detail):
+            return "Failed to decode server response: \(detail)"
+        }
+    }
+}
+
+extension APIError: CustomNSError {
+    public static var errorDomain: String { "\(SDKConfig.identifier).api" }
+
+    public var errorCode: Int {
+        switch self {
+        case .serverError(let statusCode, _): return statusCode
+        case .responseDecodingFailed: return -1
+        }
+    }
+
+    public var errorUserInfo: [String: Any] {
+        switch self {
+        case .serverError(_, let message):
+            return [NSLocalizedDescriptionKey: errorDescription ?? message]
+        case .responseDecodingFailed:
+            return [NSLocalizedDescriptionKey: errorDescription ?? "Unknown decoding error"]
         }
     }
 }
@@ -52,7 +78,7 @@ final class DeviceAPIClient: Sendable {
     private func sendWithDualRequest(_ deviceData: DeviceData) async throws -> ServerResponse {
         let ipv6URL = URL(string: "https://\(SDKConfig.defaultIPv6Host)\(SDKConfig.endpointPath)")!
 
-        // Use a monotonic approach for calculating request duration.
+        // ProcessInfo.systemUptime uses a monotonic clock, and is therefore immune to wall-clock drift from NTP adjustments.
         let startTime = ProcessInfo.processInfo.systemUptime
         let ipv6Response = try await sendToURL(deviceData, url: ipv6URL)
         let requestDurationMS = Int((ProcessInfo.processInfo.systemUptime - startTime) * 1000)
@@ -61,7 +87,7 @@ final class DeviceAPIClient: Sendable {
             let ipv4URL = URL(string: "https://\(SDKConfig.defaultIPv4Host)\(SDKConfig.endpointPath)")!
             let dataWithDuration = DeviceData(
                 idfv: deviceData.idfv,
-                trackingToken: deviceData.trackingToken,
+                storedID: deviceData.storedID,
                 requestDurationMS: requestDurationMS
             )
             do {
@@ -97,7 +123,11 @@ final class DeviceAPIClient: Sendable {
             throw APIError.serverError(statusCode: httpResponse.statusCode, message: message)
         }
 
-        let decoder = JSONDecoder()
-        return try decoder.decode(ServerResponse.self, from: data)
+        do {
+            let decoder = JSONDecoder()
+            return try decoder.decode(ServerResponse.self, from: data)
+        } catch {
+            throw APIError.responseDecodingFailed(String(describing: error))
+        }
     }
 }
