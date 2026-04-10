@@ -159,8 +159,11 @@ final class DeviceTrackerTests: XCTestCase {
 
     // MARK: - Shutdown
 
-    func testShutdownCancelsAutomaticCollection() async throws {
+    func testAutomaticCollectionSendsRequest() async throws {
+        let requestReceived = expectation(description: "Automatic collection sent a request")
+
         MockURLProtocol.requestHandler = { _ in
+            requestReceived.fulfill()
             let response = HTTPURLResponse(
                 url: URL(string: "https://test.maxmind.com")!,
                 statusCode: 200,
@@ -172,14 +175,38 @@ final class DeviceTrackerTests: XCTestCase {
 
         let tracker = makeTracker(collectionIntervalSeconds: 300)
 
-        // Give the auto-collection task a moment to start
-        try await Task.sleep(nanoseconds: 50_000_000) // 50ms
+        await fulfillment(of: [requestReceived], timeout: 2)
+        tracker.shutdown()
+    }
+
+    func testShutdownCancelsAutomaticCollection() async throws {
+        let secondRequest = expectation(description: "Second automatic collection request")
+        secondRequest.isInverted = true
+
+        var requestCount = 0
+        MockURLProtocol.requestHandler = { _ in
+            requestCount += 1
+            if requestCount >= 2 {
+                secondRequest.fulfill()
+            }
+            let response = HTTPURLResponse(
+                url: URL(string: "https://test.maxmind.com")!,
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: ["Content-Type": "application/json"]
+            )!
+            return (response, Data(self.validResponse.utf8))
+        }
+
+        let tracker = makeTracker(collectionIntervalSeconds: 300)
+
+        // Wait for the first automatic collection to complete.
+        try await Task.sleep(nanoseconds: 500_000_000)
 
         tracker.shutdown()
 
-        // After shutdown, the task should be cancelled
-        // Give it time to settle and verify no crashes
-        try await Task.sleep(nanoseconds: 200_000_000) // 200ms
+        // Verify no further requests are made after shutdown.
+        await fulfillment(of: [secondRequest], timeout: 1)
     }
 
     // MARK: - Public Init
