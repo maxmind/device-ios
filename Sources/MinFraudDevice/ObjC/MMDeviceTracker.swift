@@ -35,13 +35,15 @@ public final class ObjCDeviceTracker: NSObject {
             do {
                 let result = try await self.tracker.collectAndSend()
                 self.lock.lock()
-                defer { self.lock.unlock() }
-                guard !self.isShutDown else { return }
+                let shutDown = self.isShutDown
+                self.lock.unlock()
+                guard !shutDown else { return }
                 completion(ObjCTrackingResult(result: result), nil)
             } catch {
                 self.lock.lock()
-                defer { self.lock.unlock() }
-                guard !self.isShutDown else { return }
+                let shutDown = self.isShutDown
+                self.lock.unlock()
+                guard !shutDown else { return }
                 completion(nil, error as NSError)
             }
         }
