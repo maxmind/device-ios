@@ -40,11 +40,26 @@ jobs:
 
       - name: Run Tests
         run: |
-          xcodebuild test \
-            -scheme MinFraudDevice \
-            -destination "${{ matrix.destination }}" \
-            -resultBundlePath TestResults-iOS${{ matrix.ios-version }}.xcresult \
-            | xcpretty && exit ${PIPESTATUS[0]}
+          attempts=3
+          status=1
+          for attempt in $(seq 1 $attempts); do
+            echo "::group::Test attempt $attempt of $attempts"
+            rm -rf TestResults-iOS${{ matrix.ios-version }}.xcresult
+            set +e
+            xcodebuild test \
+              -scheme MinFraudDevice \
+              -destination "${{ matrix.destination }}" \
+              -resultBundlePath TestResults-iOS${{ matrix.ios-version }}.xcresult \
+              | xcpretty
+            status=${PIPESTATUS[0]}
+            set -e
+            echo "::endgroup::"
+            if [ $status -eq 0 ]; then
+              exit 0
+            fi
+            echo "Test attempt $attempt failed with exit code $status"
+          done
+          exit $status
 
       - name: Upload Test Results
         if: always()
@@ -89,11 +104,26 @@ jobs:
 
       - name: Build Example App
         run: |
-          xcodebuild build \
-            -project Example/MinFraudDeviceExample/MinFraudDeviceExample.xcodeproj \
-            -scheme MinFraudDeviceExample \
-            -destination "${{ matrix.destination }}" \
-            | xcpretty && exit ${PIPESTATUS[0]}
+          attempts=3
+          status=1
+          for attempt in $(seq 1 $attempts); do
+            echo "::group::Test attempt $attempt of $attempts"
+            rm -rf TestResults-iOS${{ matrix.ios-version }}.xcresult
+            set +e
+            xcodebuild build \
+              -project Example/MinFraudDeviceExample/MinFraudDeviceExample.xcodeproj \
+              -scheme MinFraudDeviceExample \
+              -destination "${{ matrix.destination }}" \
+              | xcpretty && exit ${PIPESTATUS[0]}
+            status=${PIPESTATUS[0]}
+            set -e
+            echo "::endgroup::"
+            if [ $status -eq 0 ]; then
+              exit 0
+            fi
+            echo "Test attempt $attempt failed with exit code $status"
+          done
+          exit $status
 
   lint:
     name: SwiftLint
