@@ -137,7 +137,7 @@ xcodebuild build -scheme MinFraudDevice -destination 'generic/platform=iOS Simul
 ### Testing
 
 ```bash
-xcodebuild test -scheme MinFraudDevice -destination 'platform=iOS Simulator,name=iPhone 16'
+xcodebuild test -scheme MinFraudDevice -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
 ### Code Quality
@@ -175,7 +175,7 @@ Build it with:
 xcodebuild build \
     -project Example/MinFraudDeviceExample/MinFraudDeviceExample.xcodeproj \
     -scheme MinFraudDeviceExample \
-    -destination 'platform=iOS Simulator,name=iPhone 16'
+    -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
 ## Contributing
