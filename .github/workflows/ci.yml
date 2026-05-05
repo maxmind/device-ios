@@ -42,6 +42,9 @@ jobs:
         with:
           xcode-version: ${{ matrix.xcode-version }}
 
+      - name: Warm up CoreSimulator
+        run: xcrun simctl list devices available
+
       - name: Run Tests
         run: |
           attempts=3
@@ -105,6 +108,9 @@ jobs:
         uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
           xcode-version: ${{ matrix.xcode-version }}
+
+      - name: Warm up CoreSimulator
+        run: xcrun simctl list devices available
 
       - name: Build Example App
         run: |
