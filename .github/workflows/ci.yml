@@ -42,6 +42,9 @@ jobs:
         with:
           xcode-version: ${{ matrix.xcode-version }}
 
+      - name: Warm up CoreSimulator
+        run: xcrun simctl list devices available
+
       - name: Run Tests
         run: |
           attempts=3
@@ -106,6 +109,9 @@ jobs:
         with:
           xcode-version: ${{ matrix.xcode-version }}
 
+      - name: Warm up CoreSimulator
+        run: xcrun simctl list devices available
+
       - name: Build Example App
         run: |
           attempts=3
@@ -118,7 +124,7 @@ jobs:
               -project Example/MinFraudDeviceExample/MinFraudDeviceExample.xcodeproj \
               -scheme MinFraudDeviceExample \
               -destination "${{ matrix.destination }}" \
-              | xcpretty && exit ${PIPESTATUS[0]}
+              | xcpretty
             status=${PIPESTATUS[0]}
             set -e
             echo "::endgroup::"
