@@ -118,7 +118,7 @@ jobs:
               -project Example/MinFraudDeviceExample/MinFraudDeviceExample.xcodeproj \
               -scheme MinFraudDeviceExample \
               -destination "${{ matrix.destination }}" \
-              | xcpretty && exit ${PIPESTATUS[0]}
+              | xcpretty
             status=${PIPESTATUS[0]}
             set -e
             echo "::endgroup::"
