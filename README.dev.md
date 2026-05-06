@@ -40,6 +40,9 @@
 
 - Verify the new version is resolvable via Swift Package Manager by adding the
   package dependency in a fresh project.
+- Update the version mentioned in the
+  [dev docs](https://dev.maxmind.com/minfraud/track-devices/ios/#installation)
+  (or create an issue to do so).
 
 ## Version Numbering
 
