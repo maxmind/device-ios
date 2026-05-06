@@ -1,5 +1,8 @@
 # MinFraud Device iOS SDK
 
+[![Swift Compatibility](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fmaxmind%2Fdevice-ios%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/maxmind/device-ios)
+[![Platform Compatibility](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fmaxmind%2Fdevice-ios%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/maxmind/device-ios)
+
 iOS SDK for collecting and reporting device data to MaxMind.
 
 ## Requirements
