@@ -27,9 +27,9 @@ jobs:
             xcode-version: "16.4"
             destination: "platform=iOS Simulator,name=iPhone 16,OS=18.5"
           - runner-image: "macos-26"
-            ios-version: "26.1"
+            ios-version: "26.5"
             xcode-version: "26.3"
-            destination: "platform=iOS Simulator,name=iPhone 17,OS=26.1"
+            destination: "platform=iOS Simulator,name=iPhone 17,OS=26.5"
 
     steps:
       - name: Checkout code
@@ -94,9 +94,9 @@ jobs:
             xcode-version: "16.4"
             destination: "platform=iOS Simulator,name=iPhone 16,OS=18.5"
           - runner-image: "macos-26"
-            ios-version: "26.1"
+            ios-version: "26.5"
             xcode-version: "26.3"
-            destination: "platform=iOS Simulator,name=iPhone 17,OS=26.1"
+            destination: "platform=iOS Simulator,name=iPhone 17,OS=26.5"
 
     steps:
       - name: Checkout code
