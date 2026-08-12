@@ -41,7 +41,7 @@ public struct SDKConfig: Sendable {
         self.collectionIntervalSeconds = collectionIntervalSeconds
     }
 
-    static let version = "0.1.0"
+    static let version = "0.1.1"
     static let identifier = "com.maxmind.minfraud.device"
     static let defaultIPv6Host = "d-ipv6.mmapiws.com"
     static let defaultIPv4Host = "d-ipv4.mmapiws.com"

@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name          = 'MinFraudDevice'
-  s.version       = '0.1.0'
+  s.version       = '0.1.1'
   s.summary       = 'MaxMind minFraud device tracking SDK for iOS.'
   s.description   = <<~DESC
     iOS SDK for collecting device data and sending it to MaxMind servers for
