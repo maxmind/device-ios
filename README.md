@@ -25,6 +25,25 @@ dependencies: [
 
 Or in Xcode: File > Add Package Dependencies and enter the repository URL.
 
+### CocoaPods
+
+Swift Package Manager is the recommended way to install the SDK. If your project
+uses CocoaPods, add the pod to your `Podfile`, pointing at a release tag:
+
+```ruby
+pod 'MinFraudDevice', :git => 'https://github.com/maxmind/device-ios.git', :tag => '0.1.0'
+```
+
+Then run `pod install`.
+
+The podspec is maintained in this repository, so it always matches the sources
+for the tag you select. CocoaPods reads it from the tag you point at, so
+installation requires a release after 0.1.0 — that tag and those earlier do not
+contain the podspec.
+
+The SDK is not published to the CocoaPods registry. Update the `:tag` value to
+move to a new release.
+
 ## Usage
 
 ### 1. Initialize the Tracker

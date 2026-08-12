@@ -34,19 +34,23 @@ public final class ObjCDeviceTracker: NSObject {
         Task { @MainActor in
             do {
                 let result = try await self.tracker.collectAndSend()
-                self.lock.lock()
-                let shutDown = self.isShutDown
-                self.lock.unlock()
-                guard !shutDown else { return }
+                guard !self.isShutDownValue() else { return }
                 completion(ObjCTrackingResult(result: result), nil)
             } catch {
-                self.lock.lock()
-                let shutDown = self.isShutDown
-                self.lock.unlock()
-                guard !shutDown else { return }
+                guard !self.isShutDownValue() else { return }
                 completion(nil, error as NSError)
             }
         }
+    }
+
+    /// Reads `isShutDown` under the lock.
+    ///
+    /// This is a separate synchronous method because `NSLock.lock()` and
+    /// `unlock()` are unavailable from asynchronous contexts.
+    private func isShutDownValue() -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return isShutDown
     }
 
     /// Cancels automatic collection and releases resources.
