@@ -205,3 +205,51 @@ jobs:
         run: |
           plutil -lint Sources/MinFraudDevice/Resources/PrivacyInfo.xcprivacy
           echo "Privacy Manifest is valid"
+
+  lint-podspec:
+    name: Lint Podspec
+    runs-on: macos-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
+        with:
+          xcode-version: latest-stable
+
+      - name: Install CocoaPods
+        run: |
+          if ! command -v pod > /dev/null 2>&1; then
+            brew install cocoapods
+          fi
+          pod --version
+
+      - name: Check Podspec Version Matches SDKConfig
+        run: |
+          podspec_version=$(grep -E "^[[:space:]]*s\.version[[:space:]]*=" MinFraudDevice.podspec \
+            | sed -E "s/.*'([^']+)'.*/\1/")
+          swift_version=$(grep -E "static let version" Sources/MinFraudDevice/Config/SDKConfig.swift \
+            | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "Podspec:   $podspec_version"
+          echo "SDKConfig: $swift_version"
+          if [ -z "$podspec_version" ] || [ -z "$swift_version" ]; then
+            echo "::error::Could not read the version from MinFraudDevice.podspec or SDKConfig.swift"
+            exit 1
+          fi
+          if [ "$podspec_version" != "$swift_version" ]; then
+            echo "::error::Version mismatch: podspec is $podspec_version, SDKConfig.version is $swift_version"
+            exit 1
+          fi
+          echo "Versions match"
+
+      # Use `pod lib lint`, which validates against the working tree. `pod spec
+      # lint` resolves s.source from git and would fail on every pull request,
+      # because the release tag does not exist yet.
+      - name: Lint Podspec
+        run: pod lib lint MinFraudDevice.podspec --platforms=ios --verbose
