@@ -2,6 +2,8 @@
 
 ## 0.1.2 (unreleased)
 
+- Both license files are now included in the CocoaPods distribution. Previously
+  only `LICENSE-APACHE` was vendored.
 - The CocoaPods distribution now includes `README.md` instead of the internal
   release procedure, which was renamed from `README.dev.md` to `RELEASING.md`.
 
