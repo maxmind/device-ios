@@ -18,10 +18,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - runner-image: "macos-14"
-            ios-version: "17.5"
-            xcode-version: "15.4"
-            destination: "platform=iOS Simulator,name=iPhone 15,OS=17.5"
           - runner-image: "macos-15"
             ios-version: "18.5"
             xcode-version: "16.4"
@@ -85,10 +81,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - runner-image: "macos-14"
-            ios-version: "17.5"
-            xcode-version: "15.4"
-            destination: "platform=iOS Simulator,name=iPhone 15,OS=17.5"
           - runner-image: "macos-15"
             ios-version: "18.5"
             xcode-version: "16.4"
