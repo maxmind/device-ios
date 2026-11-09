@@ -6,6 +6,8 @@
   only `LICENSE-APACHE` was vendored.
 - The CocoaPods distribution now includes `README.md` instead of the internal
   release procedure, which was renamed from `README.dev.md` to `RELEASING.md`.
+- The documented minimum Xcode version is now 16.4. CI tests Xcode 16.4 and
+  later, and the App Store requires Xcode 26 or later.
 
 ## 0.1.1 (2026-08-12)
 

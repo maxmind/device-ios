@@ -9,7 +9,7 @@ iOS SDK for collecting and reporting device data to MaxMind.
 
 - iOS 15.0+
 - Swift 5.9+
-- Xcode 15.0+
+- Xcode 16.4+
 
 ## Installation
 
